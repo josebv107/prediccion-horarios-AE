@@ -176,6 +176,10 @@ def load_and_train_model():
                 for i in range(26):
                     if i == 24:
                         features.append(float(trabaja_val))
+                    elif i == 23:  # tiempo_traslado_diario: acotar outliers
+                        features.append(min(180.0, max(13.0, float(row[i]))))
+                    elif i == 25:  # horas_trabajo_semana: acotar outliers
+                        features.append(min(48.0, max(0.0, float(row[i]))))
                     else:
                         features.append(float(row[i]))
                         
@@ -283,6 +287,13 @@ def predict_performance(features_dict):
                 val = 1.0
             else:
                 val = 0.0
+        
+        # Aplicar Capping (Acotado) de variables contextuales
+        if col == "tiempo_traslado_diario":
+            val = min(180.0, max(13.0, float(val)))
+        elif col == "horas_trabajo_semana":
+            val = min(48.0, max(0.0, float(val)))
+            
         ordered_features.append(float(val))
         
     # Escalar
