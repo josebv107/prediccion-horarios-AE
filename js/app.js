@@ -910,39 +910,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // ══════════════════════════════════════════════
-    // MODO OSCURO (DARK MODE)
-    // ══════════════════════════════════════════════
-    const btnThemeToggle = document.getElementById('btn-theme-toggle');
-    if (btnThemeToggle) {
-        const sunIcon = btnThemeToggle.querySelector('.sun-icon');
-        const moonIcon = btnThemeToggle.querySelector('.moon-icon');
-        
-        // Cargar tema inicial
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-            if (sunIcon && moonIcon) {
-                sunIcon.classList.remove('hidden');
-                moonIcon.classList.add('hidden');
-            }
-        }
-        
-        btnThemeToggle.addEventListener('click', () => {
-            const isDark = document.body.classList.toggle('dark-mode');
-            if (isDark) {
-                localStorage.setItem('theme', 'dark');
-                if (sunIcon && moonIcon) {
-                    sunIcon.classList.remove('hidden');
-                    moonIcon.classList.add('hidden');
-                }
-            } else {
-                localStorage.setItem('theme', 'light');
-                if (sunIcon && moonIcon) {
-                    sunIcon.classList.add('hidden');
-                    moonIcon.classList.remove('hidden');
-                }
-            }
-        });
-    }
 });

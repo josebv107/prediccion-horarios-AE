@@ -1479,102 +1479,119 @@ body {
 }
 
 /* ══════════════════════════════════════════════
-   TEMA MODO OSCURO (DARK MODE)
+   DISEÑO RESPONSIVO MÓVIL (COMPLETO)
    ══════════════════════════════════════════════ */
-body.dark-mode {
-    --upao-blue: #0f2746;
-    --upao-blue-dark: #071324;
-    --upao-blue-light: #183e6b;
-    --canvas-red: #ff3355;
-    --orange-accent: #ff6b3d;
-    --text-dark: #f0f4f8;
-    --text-gray: #a0aec0;
-    --bg-light: #0b0f17;
-    --white: #121824;
-    --border-color: #242f41;
-    --error-bg: #2d181c;
-    --error-text: #feb2b2;
-    --error-border: #9b2c2c;
+@media (max-width: 768px) {
+    .dashboard-wrapper {
+        padding: 15px 10px;
+        gap: 20px;
+    }
     
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cpath d='M40 0l40 23.09v46.18L40 92.36 0 69.27V23.09L40 0zm0 5.66L5.66 25.5v41.16L40 86.7l34.34-20.04V25.5L40 5.66z' fill='%231f2937' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
+    .panel-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    
+    .panel-header div {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    
+    .panel-header div button {
+        flex: 1;
+        margin: 0 !important;
+        text-align: center;
+        padding: 8px 10px !important;
+        font-size: 12px !important;
+    }
+
+    .matricula-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+    
+    #btn-predict-back {
+        width: 100% !important;
+        margin: 0 !important;
+    }
 }
 
-/* Ajustes específicos de tema oscuro */
-body.dark-mode .time-cell {
-    background-color: #171f30;
-    border-right-color: var(--border-color);
-    border-bottom-color: var(--border-color);
+@media (max-width: 576px) {
+    /* Catálogo de cursos en panel dividido horizontal para móviles */
+    .courses-split-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        height: 500px;
+    }
+    
+    .courses-sidebar {
+        flex-direction: row;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+    }
+    
+    .sidebar-course-btn {
+        flex: 0 0 auto;
+        padding: 12px 16px;
+        font-size: 11px;
+        flex-direction: row;
+        gap: 6px;
+        border-bottom: none;
+        border-right: 1px solid var(--border-color);
+    }
+    
+    .welcome-banner {
+        min-height: 240px;
+    }
+    
+    .banner-overlay {
+        padding: 20px;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .banner-text h1 {
+        font-size: 22px;
+    }
+    
+    .banner-text p {
+        font-size: 12px;
+    }
 }
 
-body.dark-mode .grid-bg-cell {
-    border-right-color: #1a2336;
-    border-bottom-color: #1a2336;
-}
+@media (max-width: 480px) {
+    .main-header {
+        flex-direction: column;
+        height: auto;
+        padding: 15px;
+        gap: 12px;
+    }
+    
+    .header-brand {
+        gap: 15px;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: center;
+    }
 
-body.dark-mode .grid-bg-cell.hour-line {
-    border-bottom-color: #242f41;
-}
-
-body.dark-mode .timetable-grid {
-    border-color: var(--border-color);
-}
-
-body.dark-mode .teacher-exigency-badge {
-    background-color: #3e3012;
-    color: #ecc94b;
-}
-
-body.dark-mode .cm-table th {
-    background-color: #1b2436;
-    color: var(--text-dark);
-}
-
-body.dark-mode .cm-cell-diagonal {
-    background-color: #0e3020;
-    color: #4ade80;
-}
-
-body.dark-mode .cm-cell-error {
-    background-color: #3b1318;
-    color: #fca5a5;
-}
-
-body.dark-mode .recommendations-box {
-    background-color: #252115;
-    border-color: #45371c;
-}
-
-body.dark-mode .empty-details-placeholder {
-    color: var(--text-gray);
-    background-color: #161e2e;
-    border-color: var(--border-color);
-}
-
-/* Estilo botón toggle tema */
-.btn-theme-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: 20px;
-    border: 1px solid var(--border-color);
-    background-color: var(--white);
-    color: var(--text-dark);
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-right: 15px;
-}
-
-.btn-theme-toggle:hover {
-    background-color: var(--bg-light);
-    border-color: var(--text-gray);
-}
-
-.btn-theme-toggle svg {
-    stroke: currentColor;
-    fill: none;
+    .login-card {
+        padding: 30px 20px;
+    }
+    
+    .options-grid {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
 }
 
