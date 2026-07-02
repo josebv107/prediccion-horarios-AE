@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Virtual - UPAO Canvas</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- ══════════════════════════════════════════════
+         ENCABEZADO PRINCIPAL (HEADER)
+         ══════════════════════════════════════════════ -->
+    <header class="main-header">
+        <div class="header-brand">
+            <!-- Logo UPAO -->
+            <a href="https://upao.edu.pe/" target="_blank" class="brand-link">
+                <img src="logo_upao.png" alt="Logo UPAO" class="logo-upao-img">
+            </a>
+
+            <!-- Logo Canvas -->
+            <a href="https://sso.upao.edu.pe:449/Account/Login?client_id=canvas_2346&nonce=766ab83fbc1d28e6d408803268fd6946eebd76b4bc37922b&redirect_uri=https%3A%2F%2Fsso.canvaslms.com%2Flogin%2Foauth2%2Fcallback&response_type=code&scope=openid&state=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhYWNfaWQiOjE3OTc3MDAwMDAwMDAwMDAwNSwibm9uY2UiOiI3NjZhYjgzZmJjMWQyOGU2ZDQwODgwMzI2OGZkNjk0NmVlYmQ3NmI0YmMzNzkyMmIiLCJob3N0IjoidXBhby5pbnN0cnVjdHVyZS5jb20iLCJleHAiOjE3ODI1ODYzOTh9.Vd5jQFhTJMwIeMZ6riTS3T0x2HbbeqhuD23pbIAVKRU"
+                target="_blank" class="brand-link">
+                <img src="logo_canvas.jpg" alt="Logo Canvas" class="logo-canvas-img">
+            </a>
+        </div>
+
+        <div class="header-actions">
+            <button id="btn-theme-toggle" class="btn-theme-toggle">
+                <svg class="sun-icon hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"/>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                </svg>
+                <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                </svg>
+                <span>Tema</span>
+            </button>
+            <!-- Botones visibles en Dashboard -->
+            <button id="btn-home" class="btn-nav hidden">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+                Inicio
+            </button>
+            <button id="btn-logout" class="btn-nav btn-disconnect hidden">Desconectar</button>
+        </div>
+    </header>
+
+    <!-- Barra azul marino inferior con info del estudiante -->
+    <div id="student-bar" class="user-info-bar hidden">
+        <span id="student-bar-text">Cargando información del estudiante...</span>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         VISTA 1: INICIO DE SESIÓN (LOGIN)
+         ══════════════════════════════════════════════ -->
+    <main id="login-view" class="login-wrapper">
+        <div class="login-card">
+            <div class="login-card-header">
+                <h2>Campus Virtual</h2>
+                <p>Ingresa tus credenciales para acceder</p>
+            </div>
+
+            <!-- Alerta de Error -->
+            <div id="login-error" class="error-alert hidden">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" x2="12" y1="8" y2="12" />
+                    <line x1="12" x2="12.01" y1="16" y2="16" />
+                </svg>
+                <span id="error-message">Error de inicio de sesión</span>
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Código de Estudiante</label>
+                    <div class="input-container">
+                        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        <input type="text" id="username" placeholder="Ej. 000287948" required autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <div class="input-container">
+                        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        <input type="password" id="password" placeholder="••••••••" required
+                            autocomplete="current-password">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login">Ingresar</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- ══════════════════════════════════════════════
+         VISTA 2: PANEL DE CONTROL (DASHBOARD)
+         ══════════════════════════════════════════════ -->
+    <main id="dashboard-view" class="dashboard-wrapper hidden">
+        <!-- Banner de bienvenida -->
+        <section class="welcome-banner">
+            <div class="banner-overlay">
+                <div class="banner-text">
+                    <h1>Campus virtual</h1>
+                    <p>Bienvenido a tu centro académico.</p>
+                </div>
+
+                <!-- Tarjeta de Perfil Flotante -->
+                <div class="profile-card">
+                    <div class="profile-avatar-container">
+                        <img src="avatar2.png" alt="Foto de Perfil" class="profile-avatar">
+                    </div>
+                    <div id="profile-name" class="profile-name">Cargando...</div>
+                    <div id="profile-id" class="profile-id">ID: 000000000</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Título de sección -->
+        <h2 class="section-title">Mis opciones</h2>
+
+        <!-- Cuadrícula de opciones -->
+        <section class="options-grid">
+            <!-- 1. Actividades Extra curriculares -->
+            <div class="option-card card-disabled" title="Módulo no disponible en esta demo">
+                <div class="card-icon-box icon-orange">EXT</div>
+                <div class="card-info">
+                    <span class="card-title">Actividades Extra curriculares</span>
+                    <span class="card-subtext">Lista de actividades realizadas.</span>
+                </div>
+            </div>
+
+            <!-- 2. Cuadro de Mérito -->
+            <div class="option-card card-disabled" title="Módulo no disponible en esta demo">
+                <div class="card-icon-box icon-orange">CM</div>
+                <div class="card-info">
+                    <span class="card-title">Cuadro de Mérito</span>
+                    <span class="card-subtext">Puedes consultar tu promedio ponderado.</span>
+                </div>
+            </div>
+
+            <!-- 3. Mis Calificaciones -->
+            <div class="option-card card-disabled" title="Módulo no disponible en esta demo">
+                <div class="card-icon-box icon-orange">NTA</div>
+                <div class="card-info">
+                    <span class="card-title">Mis Calificaciones</span>
+                    <span class="card-subtext">Visualiza tus notas por curso, componente y ciclo.</span>
+                </div>
+            </div>
+
+            <!-- 4. Certificados -->
+            <div class="option-card card-disabled" title="Módulo no disponible en esta demo">
+                <div class="card-icon-box icon-blue">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+                        <path d="m9 12 2 2 4-4" />
+                    </svg>
+                </div>
+                <div class="card-info">
+                    <span class="card-title">Certificados</span>
+                    <span class="card-subtext">Consulta y solicita tus certificados oficiales.</span>
+                </div>
+            </div>
+
+            <!-- 5. Mi Perfil -->
+            <div class="option-card card-disabled" title="Módulo no disponible en esta demo">
+                <div class="card-icon-box icon-blue">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                </div>
+                <div class="card-info">
+                    <span class="card-title">Mi Perfil</span>
+                    <span class="card-subtext">Información Personal, Credenciales.</span>
+                </div>
+            </div>
+
+            <!-- 6. Pagos Virtuales -->
+            <div class="option-card card-disabled" title="Módulo no disponible en esta demo">
+                <div class="card-icon-box icon-gray">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="20" height="14" x="2" y="5" rx="2" />
+                        <line x1="2" x2="22" y1="10" y2="10" />
+                    </svg>
+                </div>
+                <div class="card-info">
+                    <span class="card-title">Pagos Virtuales</span>
+                    <span class="card-subtext">Consulta y cancela tus pensiones en línea.</span>
+                </div>
+            </div>
+
+            <!-- 7. Trámites Académicos -->
+            <div class="option-card card-disabled" title="Módulo no disponible en esta demo">
+                <div class="card-icon-box icon-red">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                        <path d="M2 10h20" />
+                        <path d="M12 2v8" />
+                    </svg>
+                </div>
+                <div class="card-info">
+                    <span class="card-title">Trámites Académicos</span>
+                    <span class="card-subtext">Realiza solicitudes académicas.</span>
+                </div>
+            </div>
+
+            <!-- 8. HORARIO (ACTIVO) -->
+            <div id="card-horario" class="option-card card-active">
+                <span class="active-badge">Predictor</span>
+                <div class="card-icon-box icon-yellow">HOR</div>
+                <div class="card-info">
+                    <span class="card-title">HORARIO</span>
+                    <span class="card-subtext">Horarios de Clase 202610 e Inscripción.</span>
+                </div>
+            </div>
+
+            <!-- 9. Tesis -->
+            <div class="option-card card-disabled" title="Módulo no disponible en esta demo">
+                <div class="card-icon-box icon-blue">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                        <path d="M6 6h10M6 10h10" />
+                    </svg>
+                </div>
+                <div class="card-info">
+                    <span class="card-title">Tesis</span>
+                    <span class="card-subtext">Registro y seguimiento del proceso de tesis.</span>
+                </div>
+            </div>
+
+            <!-- 10. Correo Institucional -->
+            <div class="option-card card-disabled" title="Módulo no disponible en esta demo">
+                <div class="card-icon-box icon-red">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="20" height="16" x="2" y="4" rx="2" />
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                    </svg>
+                </div>
+                <div class="card-info">
+                    <span class="card-title">Correo Institucional</span>
+                    <span class="card-subtext">Accede a tu correo institucional.</span>
+                </div>
+            </div>
+
+            <!-- 11. Cambiar contraseña -->
+            <div class="option-card card-disabled" title="Módulo no disponible en esta demo">
+                <div class="card-icon-box icon-yellow">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                    </svg>
+                </div>
+                <div class="card-info">
+                    <span class="card-title">Cambiar contraseña</span>
+                    <span class="card-subtext">Modifica tu clave de forma segura.</span>
+                </div>
+            </div>
+
+            <!-- 12. Redes Upao -->
+            <div class="option-card card-disabled" title="Módulo no disponible en esta demo">
+                <div class="card-icon-box icon-blue">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="2" x2="22" y1="12" y2="12" />
+                        <path
+                            d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    </svg>
+                </div>
+                <div class="card-info">
+                    <span class="card-title">Redes Upao</span>
+                    <span class="card-subtext">Conoce las redes oficiales de tu Universidad.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Banners promocionales y servicios adicionales -->
+        <section class="banners-section">
+            <div class="banners-grid">
+                <!-- Banner 8 -->
+                <div class="banner-card banner-orange">
+                    <div class="banner-card-badge orange">BANNER 8</div>
+                    <div class="banner-card-content">
+                        <h3>Matrícula</h3>
+                        <p>Estudiante</p>
+                    </div>
+                </div>
+
+                <!-- Banner 9 -->
+                <div class="banner-card banner-purple">
+                    <div class="banner-card-badge purple">BANNER 9</div>
+                    <div class="banner-card-content">
+                        <h3>Estudiante y Docente</h3>
+                        <p>Plataforma Académica</p>
+                    </div>
+                </div>
+
+                <!-- Canvas -->
+                <div class="banner-card banner-white banner-border">
+                    <div class="banner-card-content logo-banner">
+                        <svg width="36" height="36" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="16" cy="4" r="2.5" fill="#e4002b" />
+                            <circle cx="24.5" cy="7.5" r="2.5" fill="#e4002b" />
+                            <circle cx="28" cy="16" r="2.5" fill="#e4002b" />
+                            <circle cx="24.5" cy="24.5" r="2.5" fill="#e4002b" />
+                            <circle cx="16" cy="28" r="2.5" fill="#e4002b" />
+                            <circle cx="7.5" cy="24.5" r="2.5" fill="#e4002b" />
+                            <circle cx="4" cy="16" r="2.5" fill="#e4002b" />
+                            <circle cx="7.5" cy="7.5" r="2.5" fill="#e4002b" />
+                            <circle cx="16" cy="10" r="2" fill="#e4002b" />
+                            <circle cx="20.2" cy="11.8" r="2" fill="#e4002b" />
+                            <circle cx="22" cy="16" r="2" fill="#e4002b" />
+                            <circle cx="20.2" cy="20.2" r="2" fill="#e4002b" />
+                            <circle cx="16" cy="22" r="2" fill="#e4002b" />
+                            <circle cx="11.8" cy="20.2" r="2" fill="#e4002b" />
+                            <circle cx="10" cy="16" r="2" fill="#e4002b" />
+                            <circle cx="11.8" cy="11.8" r="2" fill="#e4002b" />
+                            <circle cx="16" cy="16" r="3.5" fill="#e4002b" />
+                        </svg>
+                        <h4 style="font-family: 'Inter'; font-weight: 400; color: #555c65; margin-top: 5px;">canvas</h4>
+                    </div>
+                </div>
+
+                <!-- Imagen Identificación -->
+                <div class="banner-card banner-blue-light">
+                    <div class="banner-card-content text-center">
+                        <div style="font-size: 28px; margin-bottom: 5px;">📸</div>
+                        <h4 style="font-size: 13px; font-weight: 700; color: #003f7a;">Imagen de Identificación</h4>
+                    </div>
+                </div>
+
+                <!-- Biblioteca Virtual -->
+                <div class="banner-card banner-orange-gradient">
+                    <div class="banner-card-content">
+                        <h3 style="font-size: 14px; font-weight: 800; color: var(--white);">BIBLIOTECA VIRTUAL</h3>
+                        <p style="font-size: 10px; color: rgba(255,255,255,0.8);">Libros y revistas científicas</p>
+                    </div>
+                </div>
+
+                <!-- Biblioteca -->
+                <div class="banner-card banner-photo-overlay" style="background-image: url('campus_banner.png');">
+                    <div class="banner-photo-text">BIBLIOTECA</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ══════════════════════════════════════════════
+         VISTA 3: SIMULADOR DE MATRÍCULA Y HORARIOS
+         ══════════════════════════════════════════════ -->
+    <main id="matricula-view" class="dashboard-wrapper hidden">
+        <div class="matricula-header">
+            <h2 class="section-title">Matrícula y Horarios - Proceso de Inscripción</h2>
+            <p style="font-size: 14px; color: var(--text-gray); margin-top: 5px;">
+                Organiza tu horario semanal seleccionando tus asignaturas. El sistema validará cruces de horarios en
+                tiempo real. Límite de créditos: 22.
+            </p>
+        </div>
+
+        <!-- Alerta de Cruce de Horario -->
+        <div id="conflict-alert" class="error-alert hidden" style="margin-bottom: 15px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                <line x1="12" x2="12" y1="9" y2="13" />
+                <line x1="12" x2="12.01" y1="17" y2="17" />
+            </svg>
+            <span id="conflict-message">Cruce de horario detectado</span>
+        </div>
+
+        <div class="matricula-layout">
+            <!-- Columna Izquierda: Cursos Elegibles -->
+            <section class="courses-panel">
+                <div class="panel-header">
+                    <h3>Catálogo de Asignaturas</h3>
+                    <div class="credit-badge">
+                        Créditos: <span id="matricula-credits">0</span> / 22
+                    </div>
+                </div>
+                <div class="courses-split-container">
+                    <!-- Sidebar de Cursos (Izquierda) -->
+                    <div id="courses-sidebar" class="courses-sidebar">
+                        <p class="loading-placeholder" style="font-size: 10px; padding: 10px;">Cargando...</p>
+                    </div>
+                    <!-- Detalle de Secciones del Curso Seleccionado (Derecha) -->
+                    <div id="course-details-panel" class="course-details-panel">
+                        <div class="empty-details-placeholder">
+                            Selecciona una asignatura del catálogo de la izquierda para ver sus secciones disponibles.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Columna Derecha: Calendario y Confirmación -->
+            <section class="calendar-panel">
+                <div class="panel-header justify-between">
+                    <h3>Horario Semanal</h3>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button id="btn-predict-analysis" class="btn-predict-analysis"
+                            style="margin: 0; padding: 8px 20px; font-size: 14px; width: auto; font-family: 'Outfit', sans-serif; font-weight: 700; border-radius: 6px;">
+                            📊 Predecir Aprobación
+                        </button>
+                        <button id="btn-confirm-enroll" class="btn-login btn-confirm"
+                            style="margin: 0; padding: 8px 20px; font-size: 14px; width: auto;" disabled>
+                            Confirmar Matrícula
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Rejilla del Calendario -->
+                <div class="timetable-container">
+                    <div class="timetable-grid">
+                        <!-- Cabecera de días -->
+                        <div class="time-header">Hora</div>
+                        <div class="day-header">Lunes</div>
+                        <div class="day-header">Martes</div>
+                        <div class="day-header">Miércoles</div>
+                        <div class="day-header">Jueves</div>
+                        <div class="day-header">Viernes</div>
+                        <div class="day-header">Sábado</div>
+
+                        <!-- Celdas de horas y bloques de clases se insertan directamente aquí en JS -->
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Modal de Éxito de Matrícula -->
+        <div id="enroll-success-modal" class="modal-overlay hidden">
+            <div class="modal-card">
+                <div class="success-icon">✓</div>
+                <h2>¡Matrícula Exitosa!</h2>
+                <p>Tu horario ha sido registrado en el sistema. Los cursos seleccionados ahora aparecen como activos en
+                    tu historial académico del ciclo 2026-10.</p>
+                <button id="btn-modal-close" class="btn-login" style="margin-top: 20px;">Aceptar</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ══════════════════════════════════════════════
+         VISTA 4: PREDICTOR DE APROBACIÓN (DISEÑO FINAL)
+         ══════════════════════════════════════════════ -->
+    <main id="predict-view" class="dashboard-wrapper hidden">
+        <div class="matricula-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <div>
+                <h2 class="section-title">🔮 Predictor de Rendimiento y Aprobación</h2>
+                <p style="font-size: 14px; color: var(--text-gray); margin-top: 5px;">
+                    Analiza la viabilidad académica del horario simulado a partir de tu historial, carga lectiva y contexto personal.
+                </p>
+            </div>
+            <button id="btn-predict-back" class="btn-login" style="margin: 0; padding: 8px 20px; font-size: 14px; width: auto; background-color: var(--upao-blue);">
+                ← Volver al Horario
+            </button>
+        </div>
+
+        <div class="predictor-grid">
+            <!-- COLUMNA IZQUIERDA: CONTEXTO PERSONAL -->
+            <div class="predictor-card predictor-form-panel">
+                <h3 class="panel-subtitle" style="margin-bottom: 15px; color: var(--upao-blue); font-weight: 700; font-size: 16px;">Datos de Contexto Personal</h3>
+                <p style="font-size: 12.5px; color: var(--text-gray); margin-bottom: 20px; line-height: 1.4;">
+                    Por favor, completa la siguiente información. Estos factores externos influyen significativamente en tu fatiga y tiempo de estudio.
+                </p>
+                
+                <form id="predictor-form">
+                    <div class="form-group">
+                        <label for="predict-trabaja" style="font-weight: 600; font-size: 13px; display: block; margin-bottom: 6px;">¿Trabajas actualmente?</label>
+                        <div class="input-container">
+                            <select id="predict-trabaja" class="form-select" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); font-family: 'Outfit', sans-serif;">
+                                <option value="0">No, no trabajo</option>
+                                <option value="1">Sí, trabajo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="group-horas-trabajo" style="margin-top: 15px;">
+                        <label for="predict-horas-trabajo" style="font-weight: 600; font-size: 13px; display: block; margin-bottom: 6px;">Horas de trabajo semanales</label>
+                        <div class="input-container">
+                            <input type="number" id="predict-horas-trabajo" value="0" min="0" max="60" disabled style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); font-family: 'Outfit', sans-serif;">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label for="predict-traslado" style="font-weight: 600; font-size: 13px; display: block; margin-bottom: 6px;">Tiempo de traslado diario (ida y vuelta en minutos)</label>
+                        <div class="input-container">
+                            <input type="number" id="predict-traslado" value="30" min="0" max="360" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); font-family: 'Outfit', sans-serif;">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-run-prediction" class="btn-predict-analysis" style="width: 100%; padding: 12px; margin-top: 25px; font-weight: 700; border-radius: 6px; border: none; font-size: 14px; font-family: 'Outfit', sans-serif;">
+                        📊 Iniciar Análisis Predictivo
+                    </button>
+                </form>
+            </div>
+
+            <!-- COLUMNA DERECHA: RESULTADOS -->
+            <div class="predictor-card predictor-results-panel">
+                <!-- Estado Inicial -->
+                <div id="predict-placeholder" class="predict-placeholder-content">
+                    <div style="font-size: 56px; margin-bottom: 15px;">📊</div>
+                    <h4>Resultado del Análisis Académico</h4>
+                    <p style="font-size: 13px; color: var(--text-gray); max-width: 320px; margin: 0 auto; line-height: 1.5;">
+                        Ingresa tus datos personales en el panel de la izquierda y presiona "Iniciar Análisis Predictivo" para evaluar el horario seleccionado.
+                    </p>
+                </div>
+
+                <!-- Estado Resultados (Oculto Inicialmente) -->
+                <div id="predict-results-content" class="hidden" style="width: 100%;">
+                    <div class="result-badge-container">
+                        <span style="font-size: 13.5px; color: var(--text-gray); font-weight: 600;">Rendimiento Proyectado:</span>
+                        <div id="predict-class-badge" class="badge-result">Bueno</div>
+                    </div>
+
+                    <!-- Distribución de Probabilidades -->
+                    <div class="prob-bars-container" style="margin-top: 20px;">
+                        <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 12px;">Probabilidad Estimada por Nivel:</h4>
+                        <div id="prob-bars-list">
+                            <!-- Inserción dinámica por JS -->
+                        </div>
+                    </div>
+
+                    <!-- Desglose de Características Calculadas -->
+                    <div class="metrics-breakdown" style="margin-top: 25px;">
+                        <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 10px;">Variables Calculadas del Horario:</h4>
+                        <div class="features-grid">
+                            <div class="feature-item">
+                                <span class="feat-name">Créditos Elegidos</span>
+                                <span class="feat-val" id="feat-creditos">0</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feat-name">Días con clases</span>
+                                <span class="feat-val" id="feat-dias">0</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feat-name">Horas Muertas</span>
+                                <span class="feat-val" id="feat-muertas">0 hrs</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feat-name">Exigencia Docente Prom.</span>
+                                <span class="feat-val" id="feat-exigencia">0.0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recomendaciones -->
+                    <div class="recommendations-box" style="margin-top: 20px;">
+                        <h4 style="font-size: 13.5px; font-weight: 700; color: #92400e; margin-bottom: 10px;">Recomendaciones Académicas:</h4>
+                        <ul id="predict-recos-list" style="margin: 0; padding-left: 20px; font-size: 12.5px; color: #78350f; line-height: 1.6;">
+                            <!-- Inserción dinámica por JS -->
+                        </ul>
+                    </div>
+
+                    <!-- Métricas del Modelo Naive Bayes -->
+                    <div class="model-performance-box" style="margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-dark); margin: 0;">Métricas de Desempeño del Modelo (GNB)</h4>
+                            <span style="background-color: #f1f5f9; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; color: #475569;">Dataset: 200 Reg.</span>
+                        </div>
+                        <p style="font-size: 11.5px; color: var(--text-gray); margin-bottom: 15px; line-height: 1.4;">
+                            Métricas evaluadas en el conjunto de prueba utilizando el dataset oficial `DATASET_PROYECTOAE` con clasificador supervisado Naive Bayes:
+                        </p>
+                        <div class="model-stats-row" style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+                            <div class="stat-bubble">
+                                <span class="bubble-title">Accuracy</span>
+                                <span class="bubble-value" id="model-accuracy">0.0%</span>
+                            </div>
+                            <div class="stat-bubble">
+                                <span class="bubble-title">Precision (Prom)</span>
+                                <span class="bubble-value" id="model-precision">0.0%</span>
+                            </div>
+                            <div class="stat-bubble">
+                                <span class="bubble-title">F1-Score (Prom)</span>
+                                <span class="bubble-value" id="model-f1">0.0%</span>
+                            </div>
+                        </div>
+
+                        <!-- Matriz de Confusión -->
+                        <h5 style="font-size: 12px; font-weight: 700; color: var(--text-dark); margin-bottom: 8px;">Matriz de Confusión (Conjunto Prueba):</h5>
+                        <div class="cm-table-container">
+                            <table class="cm-table">
+                                <thead>
+                                    <tr>
+                                        <th style="font-size: 9px; color: var(--text-gray);">Real \ Pred</th>
+                                        <th>EXC</th>
+                                        <th>BUE</th>
+                                        <th>REG</th>
+                                        <th>DEF</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cm-matrix-body">
+                                    <!-- Inserción dinámica por JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+    <!-- ══════════════════════════════════════════════
+         PIE DE PÁGINA (FOOTER)
+         ══════════════════════════════════════════════ -->
+    <footer class="main-footer">
+        <p>&copy; 2026 Universidad Privada Antenor Orrego. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>
