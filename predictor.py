@@ -8,6 +8,75 @@ import random
 DATASET_URL = "https://raw.githubusercontent.com/alvarol30/DATASET_AE/refs/heads/main/DATASET_PROYECTOAE.csv"
 DATASET_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "DATASET_PROYECTOAE.csv")
 
+# Definición del orden de las características en el dataset
+FEATURE_ORDER = [
+    "promedio_acumulado",
+    "promedio_ultimo_ciclo",
+    "creditos_aprobados",
+    "creditos_desaprobados",
+    "numero_desaprobaciones",
+    "cursos_retirados",
+    "ciclo_actual",
+    "creditos_matriculados",
+    "cantidad_cursos",
+    "cantidad_cursos_repitencia",
+    "cantidad_cursos_dificiles",
+    "hora_inicio_mas_temprana",
+    "dias_7am",
+    "hora_fin_mas_tardia",
+    "dias_nocturnos",
+    "dias_con_clases",
+    "horas_consecutivas_maximas",
+    "horas_muertas_semana",
+    "max_horas_en_campus_dia",
+    "indice_balance_horario",
+    "indice_exigencia_docentes",
+    "indice_dificultad_docente_curso",
+    "cantidad_docentes_exigentes",
+    "tiempo_traslado_diario",
+    "trabaja",
+    "horas_trabajo_semana"
+]
+
+# Ponderaciones de características para Weighted Naive Bayes
+# Suaviza el peso de los promedios e incrementa el impacto del horario y el trabajo
+FEATURE_WEIGHTS = {
+    "promedio_acumulado": 0.6,
+    "promedio_ultimo_ciclo": 0.6,
+    "creditos_aprobados": 0.6,
+    "creditos_desaprobados": 0.6,
+    "numero_desaprobaciones": 0.6,
+    "cursos_retirados": 0.6,
+    "ciclo_actual": 0.8,
+    
+    # Carga académica
+    "creditos_matriculados": 1.0,
+    "cantidad_cursos": 1.0,
+    "cantidad_cursos_repitencia": 1.2,
+    "cantidad_cursos_dificiles": 1.1,
+    
+    # Horario
+    "hora_inicio_mas_temprana": 1.0,
+    "dias_7am": 1.0,
+    "hora_fin_mas_tardia": 1.0,
+    "dias_nocturnos": 1.0,
+    "dias_con_clases": 1.0,
+    "horas_consecutivas_maximas": 1.2,
+    "horas_muertas_semana": 1.5,
+    "max_horas_en_campus_dia": 1.2,
+    "indice_balance_horario": 1.0,
+    
+    # Docentes
+    "indice_exigencia_docentes": 1.2,
+    "indice_dificultad_docente_curso": 1.2,
+    "cantidad_docentes_exigentes": 1.2,
+    
+    # Contexto personal
+    "tiempo_traslado_diario": 1.5,
+    "trabaja": 1.2,
+    "horas_trabajo_semana": 1.5
+}
+
 class CustomMinMaxScaler:
     def __init__(self):
         self.mins = []
@@ -86,8 +155,14 @@ class CustomGaussianNB:
                 mean = self.means[c][j]
                 var = self.vars[c][j]
                 likelihood = self._calculate_likelihood(x[j], mean, var)
-                # Impedir log de cero
-                log_likelihood += math.log(likelihood if likelihood > 0 else 1e-15)
+                
+                # Weighted Naive Bayes
+                feat_name = FEATURE_ORDER[j]
+                weight = FEATURE_WEIGHTS.get(feat_name, 1.0)
+                
+                # Impedir log de cero y multiplicar por el peso
+                log_val = math.log(likelihood if likelihood > 0 else 1e-15)
+                log_likelihood += weight * log_val
             log_posteriors[c] = log_prior + log_likelihood
             
         # Softmax
@@ -111,35 +186,6 @@ _model = None
 _scaler = None
 _metrics = {}
 
-# Definición del orden de las características en el dataset
-FEATURE_ORDER = [
-    "promedio_acumulado",
-    "promedio_ultimo_ciclo",
-    "creditos_aprobados",
-    "creditos_desaprobados",
-    "numero_desaprobaciones",
-    "cursos_retirados",
-    "ciclo_actual",
-    "creditos_matriculados",
-    "cantidad_cursos",
-    "cantidad_cursos_repitencia",
-    "cantidad_cursos_dificiles",
-    "hora_inicio_mas_temprana",
-    "dias_7am",
-    "hora_fin_mas_tardia",
-    "dias_nocturnos",
-    "dias_con_clases",
-    "horas_consecutivas_maximas",
-    "horas_muertas_semana",
-    "max_horas_en_campus_dia",
-    "indice_balance_horario",
-    "indice_exigencia_docentes",
-    "indice_dificultad_docente_curso",
-    "cantidad_docentes_exigentes",
-    "tiempo_traslado_diario",
-    "trabaja",
-    "horas_trabajo_semana"
-]
 
 def load_and_train_model():
     global _model, _scaler, _metrics
