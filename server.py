@@ -125,7 +125,7 @@ class MyHandler(SimpleHTTPRequestHandler):
                 username = data.get('username')
                 password = data.get('password')
                 
-                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "upao.db")
+                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "upao_new.db")
                 conn = sqlite3.connect(db_path)
                 cursor = conn.cursor()
                 cursor.execute("SELECT id, nombres, apellidos, carrera, ciclo_actual FROM estudiantes WHERE codigo = ? AND password = ?", (username, password))
@@ -167,7 +167,7 @@ class MyHandler(SimpleHTTPRequestHandler):
                 codigo = data.get('codigo')
                 seccion_ids = data.get('seccion_ids', [])
                 
-                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "upao.db")
+                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "upao_new.db")
                 conn = sqlite3.connect(db_path)
                 cursor = conn.cursor()
                 
@@ -245,7 +245,7 @@ class MyHandler(SimpleHTTPRequestHandler):
                 horas_trabajo_semana = int(personal_context.get('horas_trabajo_semana', 0))
                 tiempo_traslado_diario = int(personal_context.get('tiempo_traslado_diario', 30))
                 
-                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "upao.db")
+                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "upao_new.db")
                 conn = sqlite3.connect(db_path)
                 cursor = conn.cursor()
                 
@@ -466,7 +466,7 @@ class MyHandler(SimpleHTTPRequestHandler):
                 return
                 
             try:
-                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "upao.db")
+                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "upao_new.db")
                 conn = sqlite3.connect(db_path)
                 cursor = conn.cursor()
                 
@@ -537,12 +537,12 @@ class MyHandler(SimpleHTTPRequestHandler):
                 return
                 
             try:
-                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "upao.db")
+                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "upao_new.db")
                 conn = sqlite3.connect(db_path)
                 cursor = conn.cursor()
                 
-                # Obtener id del estudiante
-                cursor.execute("SELECT id FROM estudiantes WHERE codigo = ?", (codigo,))
+                # Obtener id y ciclo del estudiante
+                cursor.execute("SELECT id, ciclo_actual FROM estudiantes WHERE codigo = ?", (codigo,))
                 student_row = cursor.fetchone()
                 if not student_row:
                     conn.close()
@@ -552,19 +552,21 @@ class MyHandler(SimpleHTTPRequestHandler):
                     self.wfile.write(json.dumps({"success": False, "message": "Estudiante no encontrado"}).encode('utf-8'))
                     return
                 student_id = student_row[0]
+                ciclo_actual = student_row[1]
                 
-                # Obtener cursos elegibles hasta ciclo 5 que NO estén aprobados
+                # Obtener cursos elegibles hasta el ciclo actual del alumno que NO estén aprobados
                 cursor.execute("""
                     SELECT c.id, c.codigo, c.nombre, c.creditos, c.ciclo_malla, c.dificultad
                     FROM cursos c
-                    WHERE c.ciclo_malla <= 5
+                    WHERE c.ciclo_malla <= ?
                       AND c.id NOT IN (
                           SELECT h.curso_id 
                           FROM historial h 
                           WHERE h.estudiante_id = ? AND h.estado = 'aprobado'
                       )
                     ORDER BY c.ciclo_malla ASC, c.codigo ASC
-                """, (student_id,))
+                """, (ciclo_actual, student_id))
+
                 
                 courses_rows = cursor.fetchall()
                 eligible_courses = []

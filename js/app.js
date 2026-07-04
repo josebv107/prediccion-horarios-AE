@@ -107,6 +107,24 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('student_code');
         currentStudent = null;
         passwordInput.value = '';
+        
+        // Clear all state variables
+        selectedSections = [];
+        eligibleCourses = [];
+        activeCourseId = null;
+        initialEnrolledSectionIds = [];
+        
+        // Clear DOM elements
+        timetableGrid.querySelectorAll('.time-cell, .class-block').forEach(el => el.remove());
+        matriculaCreditsText.textContent = '0';
+        coursesSidebar.innerHTML = '<p class="loading-placeholder" style="font-size: 10px; padding: 10px;">Cargando...</p>';
+        courseDetailsPanel.innerHTML = '<div class="empty-details-placeholder">Selecciona una asignatura del catálogo de la izquierda para ver sus secciones disponibles.</div>';
+        
+        // Clear predictor state
+        predictPlaceholder.classList.remove('hidden');
+        predictResultsContent.classList.add('hidden');
+        btnConfirmEnroll.disabled = true;
+
         showLogin();
     });
 
