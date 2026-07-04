@@ -500,13 +500,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // 3. Validar restricción de liga (mismo grupo): Si ya hay otra sección, tiene que ser de la misma liga
+        // 3. Validar restricción de liga (mismo grupo): Si ya hay otra sección, tiene que ser de la misma liga (ignorando T, P, L)
         const courseSelections = selectedSections.filter(s => s.cursoId === curso.id);
-        if (courseSelections.length > 0 && courseSelections[0].liga !== section.liga) {
-            showConflictWarning(
-                `No puedes mezclar grupos. Ya has seleccionado una sección de la <strong>Liga ${courseSelections[0].liga}</strong> para el curso <strong>${curso.nombre}</strong>. Debes seleccionar componentes del mismo grupo.`
-            );
-            return;
+        if (courseSelections.length > 0) {
+            const currentLigaGroup = courseSelections[0].liga.replace(/[TPL]/g, '').trim();
+            const newLigaGroup = section.liga.replace(/[TPL]/g, '').trim();
+            if (currentLigaGroup !== newLigaGroup) {
+                showConflictWarning(
+                    `No puedes mezclar grupos. Ya has seleccionado una sección del grupo <strong>${currentLigaGroup}</strong> para el curso <strong>${curso.nombre}</strong>. Debes seleccionar componentes del mismo grupo.`
+                );
+                return;
+            }
         }
 
         // Si ya tenía seleccionado otra sección del mismo tipo para el curso, removerla silenciosamente
@@ -725,6 +729,16 @@ document.addEventListener('DOMContentLoaded', () => {
     btnConfirmEnroll.addEventListener('click', async () => {
         conflictAlert.classList.add('hidden');
 
+        // Validar que todos los cursos desaprobados (deuda) estén seleccionados obligatoriamente
+        const uniqueSelectedCourses = [...new Set(selectedSections.map(s => s.cursoId))];
+        const failedCourses = eligibleCourses.filter(c => c.estado === 'pendiente');
+        for (const fCourse of failedCourses) {
+            if (!uniqueSelectedCourses.includes(fCourse.id)) {
+                showConflictWarning(`Debes matricularte obligatoriamente en el curso que tienes pendiente (deuda): <strong>${fCourse.nombre}</strong> antes de continuar.`);
+                return;
+            }
+        }
+
         // Validar si ha habido algún cambio con respecto a la matrícula cargada inicialmente
         const currentIds = selectedSections.map(s => s.id).sort();
         const initialIds = [...initialEnrolledSectionIds].sort();
@@ -736,7 +750,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Validar que todos los cursos seleccionados tengan sus requerimientos completos (Teoría, Práctica y/o Lab)
-        const uniqueSelectedCourses = [...new Set(selectedSections.map(s => s.cursoId))];
         for (const cursoId of uniqueSelectedCourses) {
             const curso = eligibleCourses.find(c => c.id === cursoId);
             if (curso) {

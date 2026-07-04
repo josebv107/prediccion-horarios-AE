@@ -565,18 +565,22 @@ class MyHandler(SimpleHTTPRequestHandler):
                 student_id = student_row[0]
                 ciclo_actual = student_row[1]
                 
-                # Obtener cursos elegibles hasta el ciclo actual del alumno que NO estén aprobados
+                # Obtener cursos elegibles del ciclo actual o jalados que NO estén aprobados
                 cursor.execute("""
                     SELECT c.id, c.codigo, c.nombre, c.creditos, c.ciclo_malla, c.dificultad
                     FROM cursos c
-                    WHERE c.ciclo_malla <= ?
+                    WHERE (c.ciclo_malla = ? OR c.id IN (
+                          SELECT h.curso_id 
+                          FROM historial h 
+                          WHERE h.estudiante_id = ? AND h.estado = 'desaprobado'
+                      ))
                       AND c.id NOT IN (
                           SELECT h.curso_id 
                           FROM historial h 
                           WHERE h.estudiante_id = ? AND h.estado = 'aprobado'
                       )
                     ORDER BY c.ciclo_malla ASC, c.codigo ASC
-                """, (ciclo_actual, student_id))
+                """, (ciclo_actual, student_id, student_id))
 
                 
                 courses_rows = cursor.fetchall()
@@ -602,6 +606,14 @@ class MyHandler(SimpleHTTPRequestHandler):
                         FROM secciones s
                         LEFT JOIN docentes d ON s.docente_id = d.id
                         WHERE s.curso_id = ? AND s.periodo = '2026-10'
+                        ORDER BY 
+                            CASE s.tipo
+                                WHEN 'T' THEN 1
+                                WHEN 'P' THEN 2
+                                WHEN 'L' THEN 3
+                                ELSE 4
+                            END ASC,
+                            s.secc ASC
                     """, (cid,))
                     sec_rows = cursor.fetchall()
                     sections = []
@@ -641,6 +653,17 @@ class MyHandler(SimpleHTTPRequestHandler):
                         })
                     
                     if sections:
+                        # Ordenar secciones por Liga (para agrupar T1 con P1) y luego por tipo (T, P, L)
+                        def section_sort_key(sec):
+                            liga_str = sec.get('liga', '')
+                            # Extraer identificador de grupo (eliminar letras T, P, L)
+                            group_id = liga_str.replace('T', '').replace('P', '').replace('L', '').strip()
+                            tipo = sec.get('tipo', '')
+                            tipo_order = {'T': 1, 'P': 2, 'L': 3}.get(tipo, 4)
+                            return (group_id, tipo_order, sec.get('secc', ''))
+                            
+                        sections.sort(key=section_sort_key)
+                        
                         eligible_courses.append({
                             "id": cid,
                             "codigo": c_cod,
