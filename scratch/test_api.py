@@ -1,22 +1,8 @@
-import urllib.request
-import urllib.parse
-import json
-
-url = "http://localhost:8000/api/predict"
-data = {
-    "codigo": "000555555",
-    "seccion_ids": [],
-    "personal_context": {
-        "trabaja": 1,
-        "horas_trabajo_semana": 48,
-        "tiempo_traslado_diario": 60
-    }
-}
-
-req = urllib.request.Request(url, data=json.dumps(data).encode('utf-8'), headers={'Content-Type': 'application/json'})
+import urllib.request, json
 try:
-    with urllib.request.urlopen(req) as response:
-        result = json.loads(response.read().decode())
-        print(json.dumps(result, indent=2))
+    resp = urllib.request.urlopen('http://localhost:8000/api/eligible-courses?codigo=000555555')
+    data = json.loads(resp.read())
+    for c in data['courses']:
+        print(f"{c['codigo']} {c['nombre']} - secciones: {len(c['secciones'])}")
 except Exception as e:
-    print("Error:", e)
+    print(e)

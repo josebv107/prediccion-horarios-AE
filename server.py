@@ -640,16 +640,17 @@ class MyHandler(SimpleHTTPRequestHandler):
                             "horarios": horarios
                         })
                     
-                    eligible_courses.append({
-                        "id": cid,
-                        "codigo": c_cod,
-                        "nombre": c_nom,
-                        "creditos": c_cred,
-                        "ciclo_malla": c_ciclo,
-                        "dificultad": c_dif,
-                        "estado": status_label,
-                        "secciones": sections
-                    })
+                    if sections:
+                        eligible_courses.append({
+                            "id": cid,
+                            "codigo": c_cod,
+                            "nombre": c_nom,
+                            "creditos": c_cred,
+                            "ciclo_malla": c_ciclo,
+                            "dificultad": c_dif,
+                            "estado": status_label,
+                            "secciones": sections
+                        })
                 
                 # Obtener secciones en las que el estudiante ya está matriculado para el periodo 2026-10
                 cursor.execute("SELECT seccion_id FROM matricula WHERE estudiante_id = ? AND periodo = '2026-10'", (student_id,))
