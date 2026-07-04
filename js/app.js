@@ -606,8 +606,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalCred = calculateTotalCredits();
         matriculaCreditsText.textContent = totalCred;
         
-        // Habilitar confirmar si hay secciones seleccionadas
-        btnConfirmEnroll.disabled = selectedSections.length === 0;
+        // Siempre permitir confirmar (incluso si está vacío para desmatricularse)
+        btnConfirmEnroll.disabled = false;
     }
 
     // ══════════════════════════════════════════════
@@ -680,8 +680,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
 
                 block.addEventListener('click', () => {
-                    if (confirm(`¿Deseas quitar la sección del curso ${sec.cursoNombre}?`)) {
-                        removeSection(sec.id);
+                    if (confirm(`¿Deseas quitar TODAS las secciones del curso ${sec.cursoNombre}?`)) {
+                        const sectionsToRemove = selectedSections.filter(s => s.cursoId === sec.cursoId).map(s => s.id);
+                        sectionsToRemove.forEach(id => removeSection(id, true));
+                        
+                        renderCoursesSidebar();
+                        renderCourseDetails();
+                        drawTimetableBlocks();
+                        updateCreditsAndEnrollButton();
                     }
                 });
 
@@ -717,8 +723,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // CONFIRMAR PROCESO DE MATRÍCULA
     // ══════════════════════════════════════════════
     btnConfirmEnroll.addEventListener('click', async () => {
-        if (selectedSections.length === 0) return;
-
         conflictAlert.classList.add('hidden');
 
         // Validar si ha habido algún cambio con respecto a la matrícula cargada inicialmente

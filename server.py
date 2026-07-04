@@ -186,11 +186,22 @@ class MyHandler(SimpleHTTPRequestHandler):
                 # Iniciar transacción
                 cursor.execute("BEGIN TRANSACTION")
                 
+                # 1. Decrementar matriculados de las secciones anteriores
+                cursor.execute("SELECT seccion_id FROM matricula WHERE estudiante_id = ? AND periodo = '2026-10'", (student_id,))
+                old_secciones = [r[0] for r in cursor.fetchall()]
+                if old_secciones:
+                    cursor.execute(f"UPDATE secciones SET matriculados = MAX(0, matriculados - 1) WHERE id IN ({','.join('?'*len(old_secciones))})", old_secciones)
+
                 # Limpiar matrícula previa del periodo 2026-10 para simulación limpia
                 cursor.execute("DELETE FROM matricula WHERE estudiante_id = ? AND periodo = '2026-10'", (student_id,))
                 
                 # Limpiar de historial de este periodo
                 cursor.execute("DELETE FROM historial WHERE estudiante_id = ? AND periodo = '2026-10'", (student_id,))
+                
+                # 2. Incrementar matriculados de las nuevas secciones
+                if seccion_ids:
+                    cursor.execute(f"UPDATE secciones SET matriculados = matriculados + 1 WHERE id IN ({','.join('?'*len(seccion_ids))})", seccion_ids)
+
                 
                 inserted_courses = set()
                 for sec_id in seccion_ids:
