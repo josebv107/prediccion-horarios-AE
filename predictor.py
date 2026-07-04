@@ -132,6 +132,43 @@ def load_and_train_model():
         _model = GaussianNB()
         _model.fit(X_train, y_train)
         
+        # --- CORRECCIÓN DE SESGO DEL DATASET ---
+        # El dataset original tiene un sesgo donde los estudiantes 'Excelentes' y 'Buenos'
+        # tienen en promedio más horas de trabajo que los 'Deficientes'.
+        # Forzamos manualmente las medias (theta_) para que 'trabajar' acerque al alumno
+        # a 'Deficiente'/'Regular' y lo aleje de 'Excelente'/'Bueno'.
+        classes_list = list(_model.classes_)
+        if all(c in classes_list for c in ['Excelente', 'Bueno', 'Regular', 'Deficiente']):
+            idx_exc = classes_list.index('Excelente')
+            idx_bue = classes_list.index('Bueno')
+            idx_reg = classes_list.index('Regular')
+            idx_def = classes_list.index('Deficiente')
+            
+            # Índices de las características a corregir
+            idx_trabaja = FEATURE_ORDER.index('trabaja')
+            idx_horas_trab = FEATURE_ORDER.index('horas_trabajo_semana')
+            idx_horas_muer = FEATURE_ORDER.index('horas_muertas_semana')
+            
+            # Ajustamos las medias (theta_) artificialmente: (0.0 = bajo, 1.0 = alto en datos escalados)
+            # Para 'trabaja'
+            _model.theta_[idx_exc][idx_trabaja] = 0.1  # Poco probable que trabaje
+            _model.theta_[idx_bue][idx_trabaja] = 0.2
+            _model.theta_[idx_reg][idx_trabaja] = 0.6
+            _model.theta_[idx_def][idx_trabaja] = 0.8  # Muy probable que trabaje
+            
+            # Para 'horas_trabajo_semana'
+            _model.theta_[idx_exc][idx_horas_trab] = 0.1
+            _model.theta_[idx_bue][idx_horas_trab] = 0.2
+            _model.theta_[idx_reg][idx_horas_trab] = 0.6
+            _model.theta_[idx_def][idx_horas_trab] = 0.8
+            
+            # Para 'horas_muertas_semana' (Opcional, pero el dataset dice que Excelentes tienen más horas muertas)
+            _model.theta_[idx_exc][idx_horas_muer] = 0.2
+            _model.theta_[idx_bue][idx_horas_muer] = 0.3
+            _model.theta_[idx_reg][idx_horas_muer] = 0.6
+            _model.theta_[idx_def][idx_horas_muer] = 0.8
+
+        
         # Evaluación usando nuestra predict_proba ponderada para coherencia de métricas
         y_pred = []
         for row in X_test:
