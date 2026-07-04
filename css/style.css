@@ -271,7 +271,7 @@ body {
     height: 280px;
     border-radius: 12px;
     overflow: hidden;
-    background: url('../campus_banner.png') center/cover no-repeat;
+    background: url('../images/campus_banner.png') center/cover no-repeat;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
