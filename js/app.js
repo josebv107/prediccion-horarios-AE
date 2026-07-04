@@ -394,7 +394,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Determinar si ya hay secciones de este curso seleccionadas para ver el grupo/liga activo
         const courseSelections = selectedSections.filter(s => s.cursoId === curso.id);
-        const activeLiga = courseSelections.length > 0 ? courseSelections[0].liga : null;
+        const activeLigaRaw = courseSelections.length > 0 ? courseSelections[0].liga : null;
+        const activeLigaGroup = activeLigaRaw ? activeLigaRaw.replace(/[TPL]/g, '').trim() : null;
 
         // Renderizar las secciones disponibles
         curso.secciones.forEach(sec => {
@@ -403,7 +404,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const isClosed = false;
 
             // Restricción de grupo (Liga): Si hay otra sección seleccionada y no coincide en grupo, se bloquea
-            const isLigaLocked = activeLiga !== null && activeLiga !== sec.liga;
+            const secLigaGroup = sec.liga ? sec.liga.replace(/[TPL]/g, '').trim() : '';
+            const isLigaLocked = activeLigaGroup !== null && activeLigaGroup !== secLigaGroup;
 
             const secElement = document.createElement('div');
             secElement.className = `section-item ${isSelected ? 'selected' : ''}`;
@@ -433,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!isSelected) {
                 if (isLigaLocked) {
-                    buttonText = `Bloqueado (Grupo ${activeLiga} activo)`;
+                    buttonText = `Bloqueado (Grupo ${activeLigaGroup} activo)`;
                     buttonDisabled = 'disabled';
                 } else if (isClosed) {
                     buttonText = 'Sección Cerrada';
