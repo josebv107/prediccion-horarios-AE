@@ -565,22 +565,18 @@ class handler(SimpleHTTPRequestHandler):
                 student_id = student_row[0]
                 ciclo_actual = student_row[1]
                 
-                # Obtener cursos elegibles del ciclo actual o jalados que NO estén aprobados
+                # Obtener cursos elegibles hasta el ciclo actual que NO estén aprobados
                 cursor.execute("""
                     SELECT c.id, c.codigo, c.nombre, c.creditos, c.ciclo_malla, c.dificultad
                     FROM cursos c
-                    WHERE (c.ciclo_malla = ? OR c.id IN (
-                          SELECT h.curso_id 
-                          FROM historial h 
-                          WHERE h.estudiante_id = ? AND h.estado = 'desaprobado'
-                      ))
+                    WHERE c.ciclo_malla <= ?
                       AND c.id NOT IN (
                           SELECT h.curso_id 
                           FROM historial h 
                           WHERE h.estudiante_id = ? AND h.estado = 'aprobado'
                       )
                     ORDER BY c.ciclo_malla ASC, c.codigo ASC
-                """, (ciclo_actual, student_id, student_id))
+                """, (ciclo_actual, student_id))
 
                 
                 courses_rows = cursor.fetchall()

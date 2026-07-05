@@ -1,0 +1,38 @@
+=== RECOMENDACIONES DE MATRÍCULA PARA SIMULACIÓN DEL MODELO ===
+
+A continuación, se presentan dos combinaciones de NRCs para cada estudiante (basado en sus cursos pendientes). 
+1. "Buen desempeño": Son horarios armados con los docentes de menor índice de exigencia (califican más alto) y horarios menos saturados. El predictor debería arrojar altas probabilidades de aprobar.
+2. "Mal desempeño / Riesgo": Son horarios armados con los docentes más exigentes ("filtros") de la universidad para esos cursos. El predictor debería arrojar alertas de riesgo o bajas probabilidades.
+
+==============================================
+ESTUDIANTE 1: FABIO ALONSO (000291780)
+==============================================
+[!] Cursos a matricular: SISTEMA DE GESTION BD, PATRONES DE DISEÑO, REDES Y SO, INGENIERIA DEL SOFTWARE, APRENDIZAJE ESTADISTICO.
+
+✅ NRCs para Buen Desempeño (Probabilidad Alta de Éxito):
+NRCs: 12511, 12510, 12518, 12516, 5554, 5553, 5576, 5574, 5575, 5566, 5565
+
+❌ NRCs para Mal Desempeño (Riesgo de Desaprobación):
+NRCs: 8432, 5583, 12518, 12516, 8423, 6446, 5576, 5574, 5575, 5566, 5565
+
+==============================================
+ESTUDIANTE 2: MARIO LEANDRO (000291863)
+==============================================
+[!] Cursos a matricular: FISICA II, VIGENCIA DEL PENSAMIENTO, BASE DE DATOS, PATRONES DE DISEÑO, COMPUTO DISTRIBUIDO, APRENDIZAJE ESTADISTICO.
+
+✅ NRCs para Buen Desempeño (Probabilidad Alta de Éxito):
+NRCs: 12507, 12504, 12505, 1437, 1438, 8427, 5546, 12518, 12516, 8435, 8434, 5566, 5565
+
+❌ NRCs para Mal Desempeño (Riesgo de Desaprobación):
+NRCs: 12507, 12504, 12505, 1437, 1438, 8426, 8425, 12518, 12516, 8435, 8434, 5566, 5565
+
+==============================================
+ESTUDIANTE 3: SEBASTIAN JOSE (000297194)
+==============================================
+[!] Cursos a matricular: VIGENCIA DEL PENSAMIENTO, SISTEMA DE GESTION BD, PATRONES DE DISEÑO, COMPUTO DISTRIBUIDO, INGENIERIA DEL SOFTWARE, APRENDIZAJE ESTADISTICO.
+
+✅ NRCs para Buen Desempeño (Probabilidad Alta de Éxito):
+NRCs: 1437, 1438, 12511, 12510, 12518, 12516, 8435, 8434, 5576, 5574, 5575, 5566, 5565
+
+❌ NRCs para Mal Desempeño (Riesgo de Desaprobación):
+NRCs: 1437, 1438, 8432, 5583, 12518, 12516, 8435, 8434, 5576, 5574, 5575, 5566, 5565
