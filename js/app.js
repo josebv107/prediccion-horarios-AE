@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const conflictMessage = document.getElementById('conflict-message');
     const matriculaCreditsText = document.getElementById('matricula-credits');
     const btnConfirmEnroll = document.getElementById('btn-confirm-enroll');
+    const btnQuickAdd = document.getElementById('btn-quick-add');
+    const nrcQuickInput = document.getElementById('nrc-quick-input');
     const timetableGrid = document.querySelector('.timetable-grid');
     const enrollSuccessModal = document.getElementById('enroll-success-modal');
     const btnModalClose = document.getElementById('btn-modal-close');
@@ -730,6 +732,33 @@ document.addEventListener('DOMContentLoaded', () => {
     // ══════════════════════════════════════════════
     // CONFIRMAR PROCESO DE MATRÍCULA
     // ══════════════════════════════════════════════
+    btnQuickAdd.addEventListener('click', () => {
+        const nrc = nrcQuickInput.value.trim();
+        if (!nrc) return;
+        
+        let foundSection = null;
+        let foundCourse = null;
+        
+        for (const curso of eligibleCourses) {
+            const sec = curso.secciones.find(s => s.nrc === nrc);
+            if (sec) {
+                foundSection = sec;
+                foundCourse = curso;
+                break;
+            }
+        }
+        
+        if (foundSection) {
+            addSection(foundSection, foundCourse);
+            nrcQuickInput.value = '';
+            selectedCourse = foundCourse;
+            renderCoursesSidebar();
+            renderCourseDetails();
+        } else {
+            alert('NRC no encontrado o no elegible en este ciclo.');
+        }
+    });
+
     btnConfirmEnroll.addEventListener('click', async () => {
         conflictAlert.classList.add('hidden');
 
