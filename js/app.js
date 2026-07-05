@@ -497,8 +497,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentCredits = calculateTotalCredits();
         const isCourseAlreadyAdded = selectedSections.some(s => s.cursoId === curso.id);
         
-        if (!isCourseAlreadyAdded && (currentCredits + courseCredits > 22)) {
-            showConflictWarning('Has superado el límite permitido de 22 créditos para matrícula simulada.');
+        const MAX_CREDITS = currentStudent.max_creditos || 22;
+        if (!isCourseAlreadyAdded && (currentCredits + courseCredits > MAX_CREDITS)) {
+            showConflictWarning(`Has superado el límite permitido de ${MAX_CREDITS} créditos para tu ciclo actual.`);
             return;
         }
 
@@ -610,7 +611,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateCreditsAndEnrollButton() {
         const totalCred = calculateTotalCredits();
-        matriculaCreditsText.textContent = totalCred;
+        const MAX_CREDITS = currentStudent ? (currentStudent.max_creditos || 22) : 22;
+        matriculaCreditsText.textContent = `${totalCred} / ${MAX_CREDITS}`;
         
         // Siempre permitir confirmar (incluso si está vacío para desmatricularse)
         btnConfirmEnroll.disabled = false;

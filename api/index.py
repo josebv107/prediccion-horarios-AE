@@ -133,6 +133,9 @@ class handler(SimpleHTTPRequestHandler):
                 conn.close()
                 
                 if student:
+                    ciclo = student[4]
+                    creditos_por_ciclo = {1:20, 2:21, 3:22, 4:20, 5:21, 6:21, 7:21, 8:20, 9:22, 10:17}
+                    max_creditos = creditos_por_ciclo.get(ciclo, 22)
                     response = {
                         "success": True,
                         "student": {
@@ -141,7 +144,8 @@ class handler(SimpleHTTPRequestHandler):
                             "nombres": student[1],
                             "apellidos": student[2],
                             "carrera": student[3],
-                            "ciclo_actual": student[4]
+                            "ciclo_actual": ciclo,
+                            "max_creditos": max_creditos
                         }
                     }
                     self.send_response(200)
@@ -509,6 +513,10 @@ class handler(SimpleHTTPRequestHandler):
                 total_creditos = stats[2] or 0
                 promedio = round(suma_puntos / total_creditos, 2) if total_creditos > 0 else 0.0
                 
+                ciclo = student[4]
+                creditos_por_ciclo = {1:20, 2:21, 3:22, 4:20, 5:21, 6:21, 7:21, 8:20, 9:22, 10:17}
+                max_creditos = creditos_por_ciclo.get(ciclo, 22)
+                
                 response = {
                     "success": True,
                     "student": {
@@ -517,7 +525,8 @@ class handler(SimpleHTTPRequestHandler):
                         "nombres": student[1],
                         "apellidos": student[2],
                         "carrera": student[3],
-                        "ciclo_actual": student[4],
+                        "ciclo_actual": ciclo,
+                        "max_creditos": max_creditos,
                         "stats": {
                             "creditos_aprobados": total_creditos,
                             "promedio_ponderado": promedio
