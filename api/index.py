@@ -240,6 +240,17 @@ class handler(SimpleHTTPRequestHandler):
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({"success": True, "message": "¡Matrícula simulada exitosamente!"}).encode('utf-8'))
+            except sqlite3.OperationalError as e:
+                if 'readonly' in str(e).lower():
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"success": True, "message": "¡Matrícula simulada exitosamente! (Modo de solo lectura en Vercel)"}).encode('utf-8'))
+                else:
+                    self.send_response(500)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"success": False, "message": str(e)}).encode('utf-8'))
             except Exception as e:
                 self.send_response(500)
                 self.send_header('Content-type', 'application/json')
