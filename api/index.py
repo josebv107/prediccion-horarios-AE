@@ -1,9 +1,9 @@
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 import json
-import sqlite3
 import os
 import urllib.parse
 import math
+from db_config import get_db_connection
 
 def calculate_schedule_features(horarios_list):
     # Parse into day dictionary
@@ -125,10 +125,9 @@ class handler(SimpleHTTPRequestHandler):
                 username = data.get('username')
                 password = data.get('password')
                 
-                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "db", "upao_new.db")
-                conn = sqlite3.connect(db_path)
+                conn = get_db_connection()
                 cursor = conn.cursor()
-                cursor.execute("SELECT id, nombres, apellidos, carrera, ciclo_actual FROM estudiantes WHERE codigo = ? AND password = ?", (username, password))
+                cursor.execute("SELECT id, nombres, apellidos, carrera, ciclo_actual FROM estudiantes WHERE codigo = %s AND password = %s", (username, password))
                 student = cursor.fetchone()
                 conn.close()
                 
@@ -171,12 +170,11 @@ class handler(SimpleHTTPRequestHandler):
                 codigo = data.get('codigo')
                 seccion_ids = data.get('seccion_ids', [])
                 
-                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "db", "upao_new.db")
-                conn = sqlite3.connect(db_path)
+                conn = get_db_connection()
                 cursor = conn.cursor()
                 
                 # Obtener id del estudiante
-                cursor.execute("SELECT id FROM estudiantes WHERE codigo = ?", (codigo,))
+                cursor.execute("SELECT id FROM estudiantes WHERE codigo = %s", (codigo,))
                 student_row = cursor.fetchone()
                 if not student_row:
                     conn.close()
@@ -187,32 +185,30 @@ class handler(SimpleHTTPRequestHandler):
                     return
                 student_id = student_row[0]
                 
-                # Iniciar transacción
-                cursor.execute("BEGIN TRANSACTION")
-                
                 # 1. Decrementar matriculados de las secciones anteriores
-                cursor.execute("SELECT seccion_id FROM matricula WHERE estudiante_id = ? AND periodo = '2026-10'", (student_id,))
+                cursor.execute("SELECT seccion_id FROM matricula WHERE estudiante_id = %s AND periodo = '2026-10'", (student_id,))
                 old_secciones = [r[0] for r in cursor.fetchall()]
                 if old_secciones:
-                    cursor.execute(f"UPDATE secciones SET matriculados = MAX(0, matriculados - 1) WHERE id IN ({','.join('?'*len(old_secciones))})", old_secciones)
+                    placeholders = ','.join(['%s'] * len(old_secciones))
+                    cursor.execute(f"UPDATE secciones SET matriculados = GREATEST(0, matriculados - 1) WHERE id IN ({placeholders})", old_secciones)
 
                 # Limpiar matrícula previa del periodo 2026-10 para simulación limpia
-                cursor.execute("DELETE FROM matricula WHERE estudiante_id = ? AND periodo = '2026-10'", (student_id,))
+                cursor.execute("DELETE FROM matricula WHERE estudiante_id = %s AND periodo = '2026-10'", (student_id,))
                 
                 # Limpiar de historial de este periodo
-                cursor.execute("DELETE FROM historial WHERE estudiante_id = ? AND periodo = '2026-10'", (student_id,))
+                cursor.execute("DELETE FROM historial WHERE estudiante_id = %s AND periodo = '2026-10'", (student_id,))
                 
                 # 2. Incrementar matriculados de las nuevas secciones
                 if seccion_ids:
-                    cursor.execute(f"UPDATE secciones SET matriculados = matriculados + 1 WHERE id IN ({','.join('?'*len(seccion_ids))})", seccion_ids)
+                    placeholders = ','.join(['%s'] * len(seccion_ids))
+                    cursor.execute(f"UPDATE secciones SET matriculados = matriculados + 1 WHERE id IN ({placeholders})", seccion_ids)
 
-                
                 inserted_courses = set()
                 for sec_id in seccion_ids:
                     # Registrar en matrícula
                     cursor.execute("""
                         INSERT INTO matricula (estudiante_id, seccion_id, periodo)
-                        VALUES (?, ?, '2026-10')
+                        VALUES (%s, %s, '2026-10')
                     """, (student_id, sec_id))
                     
                     # Obtener curso del que forma parte esta sección
@@ -220,7 +216,7 @@ class handler(SimpleHTTPRequestHandler):
                         SELECT c.id, c.creditos 
                         FROM secciones s
                         JOIN cursos c ON s.curso_id = c.id
-                        WHERE s.id = ?
+                        WHERE s.id = %s
                     """, (sec_id,))
                     course_info = cursor.fetchone()
                     if course_info:
@@ -230,7 +226,7 @@ class handler(SimpleHTTPRequestHandler):
                             # Registrar en historial como en_progreso
                             cursor.execute("""
                                 INSERT INTO historial (estudiante_id, curso_id, periodo, nota, creditos_hora, estado)
-                                VALUES (?, ?, '2026-10', NULL, ?, 'en_progreso')
+                                VALUES (%s, %s, '2026-10', NULL, %s, 'en_progreso')
                             """, (student_id, curso_id, creditos))
                 
                 conn.commit()
@@ -240,22 +236,12 @@ class handler(SimpleHTTPRequestHandler):
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({"success": True, "message": "¡Matrícula simulada exitosamente!"}).encode('utf-8'))
-            except sqlite3.OperationalError as e:
-                if 'readonly' in str(e).lower():
-                    self.send_response(200)
-                    self.send_header('Content-type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"success": True, "message": "¡Matrícula simulada exitosamente! (Modo de solo lectura en Vercel)"}).encode('utf-8'))
-                else:
-                    self.send_response(500)
-                    self.send_header('Content-type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"success": False, "message": str(e)}).encode('utf-8'))
             except Exception as e:
                 self.send_response(500)
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({"success": False, "message": str(e)}).encode('utf-8'))
+                
         elif self.path == '/api/predict':
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)
@@ -271,12 +257,11 @@ class handler(SimpleHTTPRequestHandler):
                 horas_trabajo_semana = int(personal_context.get('horas_trabajo_semana', 0))
                 tiempo_traslado_diario = int(personal_context.get('tiempo_traslado_diario', 30))
                 
-                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "db", "upao_new.db")
-                conn = sqlite3.connect(db_path)
+                conn = get_db_connection()
                 cursor = conn.cursor()
                 
                 # Obtener id del estudiante
-                cursor.execute("SELECT id, ciclo_actual FROM estudiantes WHERE codigo = ?", (codigo,))
+                cursor.execute("SELECT id, ciclo_actual FROM estudiantes WHERE codigo = %s", (codigo,))
                 student_row = cursor.fetchone()
                 if not student_row:
                     conn.close()
@@ -291,7 +276,7 @@ class handler(SimpleHTTPRequestHandler):
                 # 1. Medidas del historial académico
                 cursor.execute("""
                     SELECT nota, creditos_hora, estado FROM historial 
-                    WHERE estudiante_id = ? AND estado IN ('aprobado', 'desaprobado')
+                    WHERE estudiante_id = %s AND estado IN ('aprobado', 'desaprobado')
                 """, (student_id,))
                 hist_rows = cursor.fetchall()
                 
@@ -303,13 +288,14 @@ class handler(SimpleHTTPRequestHandler):
                 creditos_desaprobados = sum(r[1] for r in hist_rows if r[2] == 'desaprobado')
                 numero_desaprobaciones = sum(1 for r in hist_rows if r[2] == 'desaprobado')
                 
-                cursor.execute("SELECT COUNT(*) FROM historial WHERE estudiante_id = ? AND estado = 'retirado'", (student_id,))
-                cursos_retirados = cursor.fetchone()[0] or 0
+                cursor.execute("SELECT COUNT(*) FROM historial WHERE estudiante_id = %s AND estado = 'retirado'", (student_id,))
+                res_ret = cursor.fetchone()
+                cursos_retirados = res_ret[0] if res_ret else 0
                 
                 # Promedio del último ciclo
                 cursor.execute("""
                     SELECT DISTINCT periodo FROM historial 
-                    WHERE estudiante_id = ? AND periodo != '2026-10' AND estado IN ('aprobado', 'desaprobado')
+                    WHERE estudiante_id = %s AND periodo != '2026-10' AND estado IN ('aprobado', 'desaprobado')
                     ORDER BY periodo DESC LIMIT 1
                 """, (student_id,))
                 latest_period_row = cursor.fetchone()
@@ -317,7 +303,7 @@ class handler(SimpleHTTPRequestHandler):
                     latest_period = latest_period_row[0]
                     cursor.execute("""
                         SELECT nota, creditos_hora FROM historial 
-                        WHERE estudiante_id = ? AND periodo = ? AND estado IN ('aprobado', 'desaprobado')
+                        WHERE estudiante_id = %s AND periodo = %s AND estado IN ('aprobado', 'desaprobado')
                     """, (student_id, latest_period))
                     latest_rows = cursor.fetchall()
                     lp_puntos = sum(r[0] * r[1] for r in latest_rows if r[0] is not None)
@@ -333,43 +319,46 @@ class handler(SimpleHTTPRequestHandler):
                 cantidad_cursos_dificiles = 0
                 
                 if seccion_ids:
-                    # Carga general: obtener créditos sumando cursos únicos
+                    placeholders = ','.join(['%s'] * len(seccion_ids))
                     cursor.execute(f"""
                         SELECT SUM(creditos), COUNT(id) FROM (
                             SELECT DISTINCT c.id, c.creditos
                             FROM secciones s
                             JOIN cursos c ON s.curso_id = c.id
-                            WHERE s.id IN ({','.join('?' for _ in seccion_ids)})
-                        )
+                            WHERE s.id IN ({placeholders})
+                        ) AS t
                     """, seccion_ids)
                     load_info = cursor.fetchone()
-                    creditos_matriculados = load_info[0] or 0
-                    cantidad_cursos = load_info[1] or 0
+                    creditos_matriculados = load_info[0] or 0 if load_info else 0
+                    cantidad_cursos = load_info[1] or 0 if load_info else 0
                     
                     # Dificultad
                     cursor.execute(f"""
                         SELECT COUNT(DISTINCT c.id) FROM secciones s
                         JOIN cursos c ON s.curso_id = c.id
-                        WHERE s.id IN ({','.join('?' for _ in seccion_ids)}) AND c.dificultad >= 4
+                        WHERE s.id IN ({placeholders}) AND c.dificultad >= 4
                     """, seccion_ids)
-                    cantidad_cursos_dificiles = cursor.fetchone()[0] or 0
+                    res_dif = cursor.fetchone()
+                    cantidad_cursos_dificiles = res_dif[0] if res_dif else 0
                     
                     # Repitencia
-                    cursor.execute(f"SELECT DISTINCT curso_id FROM secciones WHERE id IN ({','.join('?' for _ in seccion_ids)})", seccion_ids)
+                    cursor.execute(f"SELECT DISTINCT curso_id FROM secciones WHERE id IN ({placeholders})", seccion_ids)
                     selected_course_ids = [r[0] for r in cursor.fetchall()]
                     for c_id in selected_course_ids:
-                        cursor.execute("SELECT COUNT(*) FROM historial WHERE estudiante_id = ? AND curso_id = ? AND estado = 'desaprobado'", (student_id, c_id))
-                        if cursor.fetchone()[0] > 0:
+                        cursor.execute("SELECT COUNT(*) FROM historial WHERE estudiante_id = %s AND curso_id = %s AND estado = 'desaprobado'", (student_id, c_id))
+                        res_rep = cursor.fetchone()
+                        if res_rep and res_rep[0] > 0:
                             cantidad_cursos_repitencia += 1
                             
                 # 3. Medidas del horario académico
                 horarios_list = []
                 if seccion_ids:
+                    placeholders = ','.join(['%s'] * len(seccion_ids))
                     cursor.execute(f"""
                         SELECT s.id, h.dia, h.hora_ini, h.hora_fin
                         FROM horarios h
                         JOIN secciones s ON h.seccion_id = s.id
-                        WHERE s.id IN ({','.join('?' for _ in seccion_ids)})
+                        WHERE s.id IN ({placeholders})
                     """, seccion_ids)
                     horarios_list = cursor.fetchall()
                 
@@ -381,10 +370,11 @@ class handler(SimpleHTTPRequestHandler):
                 cantidad_docentes_exigentes = 0
                 
                 if seccion_ids:
+                    placeholders = ','.join(['%s'] * len(seccion_ids))
                     cursor.execute(f"""
                         SELECT d.indice_exigencia FROM secciones s
                         JOIN docentes d ON s.docente_id = d.id
-                        WHERE s.id IN ({','.join('?' for _ in seccion_ids)})
+                        WHERE s.id IN ({placeholders})
                     """, seccion_ids)
                     exigencias = [r[0] for r in cursor.fetchall() if r[0] is not None]
                     if exigencias:
@@ -395,7 +385,7 @@ class handler(SimpleHTTPRequestHandler):
                         SELECT c.dificultad, d.indice_exigencia FROM secciones s
                         JOIN cursos c ON s.curso_id = c.id
                         JOIN docentes d ON s.docente_id = d.id
-                        WHERE s.id IN ({','.join('?' for _ in seccion_ids)})
+                        WHERE s.id IN ({placeholders})
                     """, seccion_ids)
                     pair_rows = cursor.fetchall()
                     vals = [(r[0] + r[1]) / 2.0 for r in pair_rows if r[0] is not None and r[1] is not None]
@@ -492,12 +482,11 @@ class handler(SimpleHTTPRequestHandler):
                 return
                 
             try:
-                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "db", "upao_new.db")
-                conn = sqlite3.connect(db_path)
+                conn = get_db_connection()
                 cursor = conn.cursor()
                 
                 # Obtener info básica
-                cursor.execute("SELECT id, nombres, apellidos, carrera, ciclo_actual FROM estudiantes WHERE codigo = ?", (codigo,))
+                cursor.execute("SELECT id, nombres, apellidos, carrera, ciclo_actual FROM estudiantes WHERE codigo = %s", (codigo,))
                 student = cursor.fetchone()
                 
                 if not student:
@@ -514,14 +503,14 @@ class handler(SimpleHTTPRequestHandler):
                 cursor.execute("""
                     SELECT COUNT(*), SUM(h.nota * h.creditos_hora), SUM(h.creditos_hora)
                     FROM historial h
-                    WHERE h.estudiante_id = ? AND h.estado = 'aprobado'
+                    WHERE h.estudiante_id = %s AND h.estado = 'aprobado'
                 """, (student_id,))
                 stats = cursor.fetchone()
                 conn.close()
                 
-                total_cursos = stats[0] or 0
-                suma_puntos = stats[1] or 0
-                total_creditos = stats[2] or 0
+                total_cursos = stats[0] if stats else 0
+                suma_puntos = stats[1] if stats and stats[1] is not None else 0
+                total_creditos = stats[2] if stats and stats[2] is not None else 0
                 promedio = round(suma_puntos / total_creditos, 2) if total_creditos > 0 else 0.0
                 
                 ciclo = student[4]
@@ -568,12 +557,11 @@ class handler(SimpleHTTPRequestHandler):
                 return
                 
             try:
-                db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "db", "upao_new.db")
-                conn = sqlite3.connect(db_path)
+                conn = get_db_connection()
                 cursor = conn.cursor()
                 
                 # Obtener id y ciclo del estudiante
-                cursor.execute("SELECT id, ciclo_actual FROM estudiantes WHERE codigo = ?", (codigo,))
+                cursor.execute("SELECT id, ciclo_actual FROM estudiantes WHERE codigo = %s", (codigo,))
                 student_row = cursor.fetchone()
                 if not student_row:
                     conn.close()
@@ -589,15 +577,14 @@ class handler(SimpleHTTPRequestHandler):
                 cursor.execute("""
                     SELECT c.id, c.codigo, c.nombre, c.creditos, c.ciclo_malla, c.dificultad
                     FROM cursos c
-                    WHERE c.ciclo_malla <= ?
+                    WHERE c.ciclo_malla <= %s
                       AND c.id NOT IN (
                           SELECT h.curso_id 
                           FROM historial h 
-                          WHERE h.estudiante_id = ? AND h.estado = 'aprobado'
+                          WHERE h.estudiante_id = %s AND h.estado = 'aprobado'
                       )
                     ORDER BY c.ciclo_malla ASC, c.codigo ASC
                 """, (ciclo_actual, student_id))
-
                 
                 courses_rows = cursor.fetchall()
                 eligible_courses = []
@@ -608,7 +595,7 @@ class handler(SimpleHTTPRequestHandler):
                     # Ver si está en historial como desaprobado para marcarlo como pendiente
                     cursor.execute("""
                         SELECT estado FROM historial 
-                        WHERE estudiante_id = ? AND curso_id = ?
+                        WHERE estudiante_id = %s AND curso_id = %s
                         ORDER BY id DESC LIMIT 1
                     """, (student_id, cid))
                     hist_status = cursor.fetchone()
@@ -621,7 +608,7 @@ class handler(SimpleHTTPRequestHandler):
                         SELECT s.id, s.liga, s.tipo, s.nrc, s.secc, s.capacidad, s.matriculados, s.cerrado, d.nombres, d.indice_exigencia
                         FROM secciones s
                         LEFT JOIN docentes d ON s.docente_id = d.id
-                        WHERE s.curso_id = ? AND s.periodo = '2026-10'
+                        WHERE s.curso_id = %s AND s.periodo = '2026-10'
                         ORDER BY 
                             CASE s.tipo
                                 WHEN 'T' THEN 1
@@ -641,7 +628,7 @@ class handler(SimpleHTTPRequestHandler):
                         cursor.execute("""
                             SELECT dia, hora_ini, hora_fin, aula, pabellon
                             FROM horarios
-                            WHERE seccion_id = ?
+                            WHERE seccion_id = %s
                         """, (sid,))
                         hor_rows = cursor.fetchall()
                         horarios = []
@@ -672,7 +659,6 @@ class handler(SimpleHTTPRequestHandler):
                         # Ordenar secciones por Liga (para agrupar T1 con P1) y luego por tipo (T, P, L)
                         def section_sort_key(sec):
                             liga_str = sec.get('liga', '')
-                            # Extraer identificador de grupo (eliminar letras T, P, L)
                             group_id = liga_str.replace('T', '').replace('P', '').replace('L', '').strip()
                             tipo = sec.get('tipo', '')
                             tipo_order = {'T': 1, 'P': 2, 'L': 3}.get(tipo, 4)
@@ -692,7 +678,7 @@ class handler(SimpleHTTPRequestHandler):
                         })
                 
                 # Obtener secciones en las que el estudiante ya está matriculado para el periodo 2026-10
-                cursor.execute("SELECT seccion_id FROM matricula WHERE estudiante_id = ? AND periodo = '2026-10'", (student_id,))
+                cursor.execute("SELECT seccion_id FROM matricula WHERE estudiante_id = %s AND periodo = '2026-10'", (student_id,))
                 enrolled_section_ids = [row[0] for row in cursor.fetchall()]
                 
                 conn.close()
@@ -713,16 +699,3 @@ class handler(SimpleHTTPRequestHandler):
         else:
             # Servir archivos estáticos normalmente
             super().do_GET()
-
-def run(port=8000):
-    server_address = ('', port)
-    httpd = HTTPServer(server_address, MyHandler)
-    print(f"Servidor UPAO Canvas iniciado en http://localhost:{port}")
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        print("\nServidor detenido.")
-        httpd.server_close()
-
-if __name__ == '__main__':
-    run()
