@@ -6,7 +6,8 @@ def get_db_connection():
     host = os.environ.get('MYSQL_HOST', 'localhost')
     port = int(os.environ.get('MYSQL_PORT', 3306))
     user = os.environ.get('MYSQL_USER', 'root')
-    password = os.environ.get('MYSQL_PASSWORD', '')
+    default_pass = '180302' if host in ('localhost', '127.0.0.1') else ''
+    password = os.environ.get('MYSQL_PASSWORD', default_pass)
     database = os.environ.get('MYSQL_DB', 'upao_horarios')
     
     # Manejo de SSL si está configurado en las variables de entorno
