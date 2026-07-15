@@ -1,8 +1,11 @@
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 import json
 import os
+import sys
 import urllib.parse
 import math
+
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from db_config import get_db_connection
 
 def calculate_schedule_features(horarios_list):
