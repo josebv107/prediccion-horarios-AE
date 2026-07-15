@@ -115,6 +115,23 @@ def calculate_schedule_features(horarios_list):
     }
 
 class MyHandler(SimpleHTTPRequestHandler):
+    def send_cors_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_cors_headers()
+        self.end_headers()
+
+    def send_json_response(self, status_code, data):
+        self.send_response(status_code)
+        self.send_header('Content-type', 'application/json')
+        self.send_cors_headers()
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode('utf-8'))
+
     def do_POST(self):
         if self.path == '/api/login':
             content_length = int(self.headers['Content-Length'])
@@ -147,20 +164,11 @@ class MyHandler(SimpleHTTPRequestHandler):
                             "max_creditos": max_creditos
                         }
                     }
-                    self.send_response(200)
-                    self.send_header('Content-type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write(json.dumps(response).encode('utf-8'))
+                    self.send_json_response(200, response)
                 else:
-                    self.send_response(401)
-                    self.send_header('Content-type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"success": False, "message": "Código o contraseña incorrectos"}).encode('utf-8'))
+                    self.send_json_response(401, {"success": False, "message": "Código o contraseña incorrectos"})
             except Exception as e:
-                self.send_response(400)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"success": False, "message": str(e)}).encode('utf-8'))
+                self.send_json_response(400, {"success": False, "message": str(e)})
                 
         elif self.path == '/api/enroll':
             content_length = int(self.headers['Content-Length'])
@@ -178,10 +186,7 @@ class MyHandler(SimpleHTTPRequestHandler):
                 student_row = cursor.fetchone()
                 if not student_row:
                     conn.close()
-                    self.send_response(404)
-                    self.send_header('Content-type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"success": False, "message": "Estudiante no encontrado"}).encode('utf-8'))
+                    self.send_json_response(404, {"success": False, "message": "Estudiante no encontrado"})
                     return
                 student_id = int(student_row[0])
                 
@@ -232,15 +237,9 @@ class MyHandler(SimpleHTTPRequestHandler):
                 conn.commit()
                 conn.close()
                 
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"success": True, "message": "¡Matrícula simulada exitosamente!"}).encode('utf-8'))
+                self.send_json_response(200, {"success": True, "message": "¡Matrícula simulada exitosamente!"})
             except Exception as e:
-                self.send_response(500)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"success": False, "message": str(e)}).encode('utf-8'))
+                self.send_json_response(500, {"success": False, "message": str(e)})
                 
         elif self.path == '/api/predict':
             content_length = int(self.headers['Content-Length'])
@@ -265,10 +264,7 @@ class MyHandler(SimpleHTTPRequestHandler):
                 student_row = cursor.fetchone()
                 if not student_row:
                     conn.close()
-                    self.send_response(404)
-                    self.send_header('Content-type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"success": False, "message": "Estudiante no encontrado"}).encode('utf-8'))
+                    self.send_json_response(404, {"success": False, "message": "Estudiante no encontrado"})
                     return
                     
                 student_id, ciclo_actual = int(student_row[0]), int(student_row[1])
@@ -448,25 +444,15 @@ class MyHandler(SimpleHTTPRequestHandler):
                     
                 prediction_result["recommendations"] = recos
                 
-                # Devolver respuesta
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({
+                self.send_json_response(200, {
                     "success": True,
                     "prediction": prediction_result
-                }).encode('utf-8'))
+                })
                 
             except Exception as e:
-                self.send_response(500)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"success": False, "message": str(e)}).encode('utf-8'))
+                self.send_json_response(500, {"success": False, "message": str(e)})
         else:
-            self.send_response(404)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({"success": False, "message": "Endpoint no encontrado"}).encode('utf-8'))
+            self.send_json_response(404, {"success": False, "message": "Endpoint no encontrado"})
 
     def do_GET(self):
         if self.path.startswith('/api/student-info'):
@@ -475,10 +461,7 @@ class MyHandler(SimpleHTTPRequestHandler):
             codigo = query_params.get('codigo', [None])[0]
             
             if not codigo:
-                self.send_response(400)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"success": False, "message": "Código de estudiante requerido"}).encode('utf-8'))
+                self.send_json_response(400, {"success": False, "message": "Código de estudiante requerido"})
                 return
                 
             try:
@@ -491,10 +474,7 @@ class MyHandler(SimpleHTTPRequestHandler):
                 
                 if not student:
                     conn.close()
-                    self.send_response(404)
-                    self.send_header('Content-type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"success": False, "message": "Estudiante no encontrado"}).encode('utf-8'))
+                    self.send_json_response(404, {"success": False, "message": "Estudiante no encontrado"})
                     return
                     
                 student_id = int(student[0])
@@ -534,15 +514,9 @@ class MyHandler(SimpleHTTPRequestHandler):
                     }
                 }
                 
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps(response).encode('utf-8'))
+                self.send_json_response(200, response)
             except Exception as e:
-                self.send_response(500)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"success": False, "message": str(e)}).encode('utf-8'))
+                self.send_json_response(500, {"success": False, "message": str(e)})
                 
         elif self.path.startswith('/api/eligible-courses'):
             parsed_url = urllib.parse.urlparse(self.path)
@@ -550,10 +524,7 @@ class MyHandler(SimpleHTTPRequestHandler):
             codigo = query_params.get('codigo', [None])[0]
             
             if not codigo:
-                self.send_response(400)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"success": False, "message": "Código de estudiante requerido"}).encode('utf-8'))
+                self.send_json_response(400, {"success": False, "message": "Código de estudiante requerido"})
                 return
                 
             try:
@@ -565,10 +536,7 @@ class MyHandler(SimpleHTTPRequestHandler):
                 student_row = cursor.fetchone()
                 if not student_row:
                     conn.close()
-                    self.send_response(404)
-                    self.send_header('Content-type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write(json.dumps({"success": False, "message": "Estudiante no encontrado"}).encode('utf-8'))
+                    self.send_json_response(404, {"success": False, "message": "Estudiante no encontrado"})
                     return
                 student_id = int(student_row[0])
                 ciclo_actual = int(student_row[1])
@@ -683,19 +651,13 @@ class MyHandler(SimpleHTTPRequestHandler):
                 
                 conn.close()
                 
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({
+                self.send_json_response(200, {
                     "success": True, 
                     "courses": eligible_courses,
                     "enrolled_section_ids": enrolled_section_ids
-                }).encode('utf-8'))
+                })
             except Exception as e:
-                self.send_response(500)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"success": False, "message": str(e)}).encode('utf-8'))
+                self.send_json_response(500, {"success": False, "message": str(e)})
         else:
             # Servir archivos estáticos normalmente
             super().do_GET()

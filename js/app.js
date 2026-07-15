@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    async function loadDashboard(codigo) {
+    async function loadDashboard(codigo, retries = 2) {
         try {
             studentBarText.textContent = `Cargando datos del estudiante ${codigo}...`;
             const response = await fetch(`/api/student-info?codigo=${codigo}`);
@@ -162,13 +162,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 studentBar.classList.remove('hidden');
                 btnHome.classList.remove('hidden');
                 btnLogout.classList.remove('hidden');
+            } else if (retries > 0) {
+                console.warn(`Respuesta no exitosa, reintentando (${retries} intentos restantes)...`);
+                await new Promise(r => setTimeout(r, 1000));
+                return loadDashboard(codigo, retries - 1);
             } else {
                 localStorage.removeItem('student_code');
                 showLogin();
             }
         } catch (err) {
             console.error('Error cargando información de estudiante:', err);
-            studentBarText.textContent = 'Error al cargar la información del estudiante';
+            if (retries > 0) {
+                console.warn(`Error de red, reintentando (${retries} intentos restantes)...`);
+                await new Promise(r => setTimeout(r, 1000));
+                return loadDashboard(codigo, retries - 1);
+            }
+            studentBarText.textContent = 'Error de conexión. Verifica tu señal Wi-Fi.';
             
             loginView.classList.add('hidden');
             matriculaView.classList.add('hidden');
