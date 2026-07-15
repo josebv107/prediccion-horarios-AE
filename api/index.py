@@ -135,13 +135,13 @@ class handler(SimpleHTTPRequestHandler):
                 conn.close()
                 
                 if student:
-                    ciclo = student[4]
+                    ciclo = int(student[4])
                     creditos_por_ciclo = {1:20, 2:21, 3:22, 4:20, 5:21, 6:21, 7:21, 8:20, 9:22, 10:17}
                     max_creditos = creditos_por_ciclo.get(ciclo, 22)
                     response = {
                         "success": True,
                         "student": {
-                            "id": student[0],
+                            "id": int(student[0]),
                             "codigo": username,
                             "nombres": student[1],
                             "apellidos": student[2],
@@ -186,11 +186,11 @@ class handler(SimpleHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write(json.dumps({"success": False, "message": "Estudiante no encontrado"}).encode('utf-8'))
                     return
-                student_id = student_row[0]
+                student_id = int(student_row[0])
                 
                 # 1. Decrementar matriculados de las secciones anteriores
                 cursor.execute("SELECT seccion_id FROM matricula WHERE estudiante_id = %s AND periodo = '2026-10'", (student_id,))
-                old_secciones = [r[0] for r in cursor.fetchall()]
+                old_secciones = [int(r[0]) for r in cursor.fetchall()]
                 if old_secciones:
                     placeholders = ','.join(['%s'] * len(old_secciones))
                     cursor.execute(f"UPDATE secciones SET matriculados = GREATEST(0, matriculados - 1) WHERE id IN ({placeholders})", old_secciones)
@@ -223,7 +223,7 @@ class handler(SimpleHTTPRequestHandler):
                     """, (sec_id,))
                     course_info = cursor.fetchone()
                     if course_info:
-                        curso_id, creditos = course_info
+                        curso_id, creditos = int(course_info[0]), int(course_info[1])
                         if curso_id not in inserted_courses:
                             inserted_courses.add(curso_id)
                             # Registrar en historial como en_progreso
@@ -274,7 +274,7 @@ class handler(SimpleHTTPRequestHandler):
                     self.wfile.write(json.dumps({"success": False, "message": "Estudiante no encontrado"}).encode('utf-8'))
                     return
                     
-                student_id, ciclo_actual = student_row
+                student_id, ciclo_actual = int(student_row[0]), int(student_row[1])
                 
                 # 1. Medidas del historial académico
                 cursor.execute("""
@@ -283,17 +283,17 @@ class handler(SimpleHTTPRequestHandler):
                 """, (student_id,))
                 hist_rows = cursor.fetchall()
                 
-                total_puntos = sum(r[0] * r[1] for r in hist_rows if r[0] is not None)
-                total_creditos = sum(r[1] for r in hist_rows if r[0] is not None)
+                total_puntos = sum(float(r[0]) * float(r[1]) for r in hist_rows if r[0] is not None)
+                total_creditos = sum(float(r[1]) for r in hist_rows if r[0] is not None)
                 promedio_acumulado = total_puntos / total_creditos if total_creditos > 0 else 12.0
                 
-                creditos_aprobados = sum(r[1] for r in hist_rows if r[2] == 'aprobado')
-                creditos_desaprobados = sum(r[1] for r in hist_rows if r[2] == 'desaprobado')
+                creditos_aprobados = sum(int(r[1]) for r in hist_rows if r[2] == 'aprobado')
+                creditos_desaprobados = sum(int(r[1]) for r in hist_rows if r[2] == 'desaprobado')
                 numero_desaprobaciones = sum(1 for r in hist_rows if r[2] == 'desaprobado')
                 
                 cursor.execute("SELECT COUNT(*) FROM historial WHERE estudiante_id = %s AND estado = 'retirado'", (student_id,))
                 res_ret = cursor.fetchone()
-                cursos_retirados = res_ret[0] if res_ret else 0
+                cursos_retirados = int(res_ret[0]) if res_ret and res_ret[0] is not None else 0
                 
                 # Promedio del último ciclo
                 cursor.execute("""
@@ -309,8 +309,8 @@ class handler(SimpleHTTPRequestHandler):
                         WHERE estudiante_id = %s AND periodo = %s AND estado IN ('aprobado', 'desaprobado')
                     """, (student_id, latest_period))
                     latest_rows = cursor.fetchall()
-                    lp_puntos = sum(r[0] * r[1] for r in latest_rows if r[0] is not None)
-                    lp_creditos = sum(r[1] for r in latest_rows if r[0] is not None)
+                    lp_puntos = sum(float(r[0]) * float(r[1]) for r in latest_rows if r[0] is not None)
+                    lp_creditos = sum(float(r[1]) for r in latest_rows if r[0] is not None)
                     promedio_ultimo_ciclo = lp_puntos / lp_creditos if lp_creditos > 0 else 12.0
                 else:
                     promedio_ultimo_ciclo = promedio_acumulado
@@ -332,8 +332,8 @@ class handler(SimpleHTTPRequestHandler):
                         ) AS t
                     """, seccion_ids)
                     load_info = cursor.fetchone()
-                    creditos_matriculados = load_info[0] or 0 if load_info else 0
-                    cantidad_cursos = load_info[1] or 0 if load_info else 0
+                    creditos_matriculados = int(load_info[0]) if load_info and load_info[0] is not None else 0
+                    cantidad_cursos = int(load_info[1]) if load_info and load_info[1] is not None else 0
                     
                     # Dificultad
                     cursor.execute(f"""
@@ -342,11 +342,11 @@ class handler(SimpleHTTPRequestHandler):
                         WHERE s.id IN ({placeholders}) AND c.dificultad >= 4
                     """, seccion_ids)
                     res_dif = cursor.fetchone()
-                    cantidad_cursos_dificiles = res_dif[0] if res_dif else 0
+                    cantidad_cursos_dificiles = int(res_dif[0]) if res_dif and res_dif[0] is not None else 0
                     
                     # Repitencia
                     cursor.execute(f"SELECT DISTINCT curso_id FROM secciones WHERE id IN ({placeholders})", seccion_ids)
-                    selected_course_ids = [r[0] for r in cursor.fetchall()]
+                    selected_course_ids = [int(r[0]) for r in cursor.fetchall()]
                     for c_id in selected_course_ids:
                         cursor.execute("SELECT COUNT(*) FROM historial WHERE estudiante_id = %s AND curso_id = %s AND estado = 'desaprobado'", (student_id, c_id))
                         res_rep = cursor.fetchone()
@@ -379,7 +379,7 @@ class handler(SimpleHTTPRequestHandler):
                         JOIN docentes d ON s.docente_id = d.id
                         WHERE s.id IN ({placeholders})
                     """, seccion_ids)
-                    exigencias = [r[0] for r in cursor.fetchall() if r[0] is not None]
+                    exigencias = [float(r[0]) for r in cursor.fetchall() if r[0] is not None]
                     if exigencias:
                         indice_exigencia_docentes = sum(exigencias) / len(exigencias)
                         cantidad_docentes_exigentes = sum(1 for e in exigencias if e >= 4.0)
@@ -391,7 +391,7 @@ class handler(SimpleHTTPRequestHandler):
                         WHERE s.id IN ({placeholders})
                     """, seccion_ids)
                     pair_rows = cursor.fetchall()
-                    vals = [(r[0] + r[1]) / 2.0 for r in pair_rows if r[0] is not None and r[1] is not None]
+                    vals = [(float(r[0]) + float(r[1])) / 2.0 for r in pair_rows if r[0] is not None and r[1] is not None]
                     if vals:
                         indice_dificultad_docente_curso = sum(vals) / len(vals)
                 
@@ -500,7 +500,7 @@ class handler(SimpleHTTPRequestHandler):
                     self.wfile.write(json.dumps({"success": False, "message": "Estudiante no encontrado"}).encode('utf-8'))
                     return
                     
-                student_id = student[0]
+                student_id = int(student[0])
                 
                 # Calcular créditos y promedio ponderado
                 cursor.execute("""
@@ -511,12 +511,12 @@ class handler(SimpleHTTPRequestHandler):
                 stats = cursor.fetchone()
                 conn.close()
                 
-                total_cursos = stats[0] if stats else 0
-                suma_puntos = stats[1] if stats and stats[1] is not None else 0
-                total_creditos = stats[2] if stats and stats[2] is not None else 0
+                total_cursos = int(stats[0]) if stats and stats[0] is not None else 0
+                suma_puntos = float(stats[1]) if stats and stats[1] is not None else 0.0
+                total_creditos = int(stats[2]) if stats and stats[2] is not None else 0
                 promedio = round(suma_puntos / total_creditos, 2) if total_creditos > 0 else 0.0
                 
-                ciclo = student[4]
+                ciclo = int(student[4])
                 creditos_por_ciclo = {1:20, 2:21, 3:22, 4:20, 5:21, 6:21, 7:21, 8:20, 9:22, 10:17}
                 max_creditos = creditos_por_ciclo.get(ciclo, 22)
                 
@@ -573,8 +573,8 @@ class handler(SimpleHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write(json.dumps({"success": False, "message": "Estudiante no encontrado"}).encode('utf-8'))
                     return
-                student_id = student_row[0]
-                ciclo_actual = student_row[1]
+                student_id = int(student_row[0])
+                ciclo_actual = int(student_row[1])
                 
                 # Obtener cursos elegibles hasta el ciclo actual que NO estén aprobados
                 cursor.execute("""
@@ -593,7 +593,7 @@ class handler(SimpleHTTPRequestHandler):
                 eligible_courses = []
                 
                 for crow in courses_rows:
-                    cid, c_cod, c_nom, c_cred, c_ciclo, c_dif = crow
+                    cid, c_cod, c_nom, c_cred, c_ciclo, c_dif = int(crow[0]), crow[1], crow[2], int(crow[3]), int(crow[4]), float(crow[5])
                     
                     # Ver si está en historial como desaprobado para marcarlo como pendiente
                     cursor.execute("""
@@ -625,7 +625,7 @@ class handler(SimpleHTTPRequestHandler):
                     sections = []
                     
                     for srow in sec_rows:
-                        sid, liga, tipo, nrc, secc, capa, matric, cerrado, doc_nombres, doc_exig = srow
+                        sid, liga, tipo, nrc, secc, capa, matric, cerrado, doc_nombres, doc_exig = int(srow[0]), srow[1], srow[2], srow[3], srow[4], int(srow[5]), int(srow[6]), int(srow[7]), srow[8], float(srow[9]) if srow[9] is not None else 3.5
                         
                         # Obtener horarios de la sección
                         cursor.execute("""
@@ -682,7 +682,7 @@ class handler(SimpleHTTPRequestHandler):
                 
                 # Obtener secciones en las que el estudiante ya está matriculado para el periodo 2026-10
                 cursor.execute("SELECT seccion_id FROM matricula WHERE estudiante_id = %s AND periodo = '2026-10'", (student_id,))
-                enrolled_section_ids = [row[0] for row in cursor.fetchall()]
+                enrolled_section_ids = [int(row[0]) for row in cursor.fetchall()]
                 
                 conn.close()
                 
